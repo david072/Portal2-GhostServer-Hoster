@@ -1,4 +1,4 @@
-import { apiBaseUrl } from "./authHelper.js";
+import { apiBaseUrl } from "./util/resources.js";
 
 $('#login-form').submit((event) => {
     event.preventDefault();

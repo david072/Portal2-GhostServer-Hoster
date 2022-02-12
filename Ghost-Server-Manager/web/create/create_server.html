@@ -138,7 +138,8 @@
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 	<script type="module">
-		import { fetchAuthenticated, apiBaseUrl } from "../authHelper.js";
+		import { fetchAuthenticated } from "../util/authHelper.js";
+		import { apiBaseUrl } from "../util/resources.js";
 
 		$('#create-server-form').submit(async (event) => {
 			event.preventDefault();

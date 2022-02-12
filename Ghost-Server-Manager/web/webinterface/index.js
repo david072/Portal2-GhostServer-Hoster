@@ -1,7 +1,6 @@
-import { getUser, fetchAuthenticated, apiBaseUrl } from "../authHelper.js";
+import { getUser, fetchAuthenticated } from "../util/authHelper.js";
+import { apiBaseUrl, connectCommandTemplate } from "../util/resources.js";
 import { validateContainerId, sendToContainer, containerId, getContainerId } from "./util.js";
-
-const connectCommandTemplate = "ghost_connect p2-ghost-server.ddnss.de {ws_port}";
 
 $(document).ready(async () => {
 	const user = await getUser();

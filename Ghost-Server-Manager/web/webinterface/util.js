@@ -1,4 +1,5 @@
-import { fetchAuthenticated, apiBaseUrl } from "../authHelper.js";
+import { fetchAuthenticated } from "../util/authHelper.js";
+import { apiBaseUrl } from "../util/resources.js";
 
 export let containerId = undefined;
 

@@ -1,8 +1,7 @@
-import { fetchAuthenticated, getUser, apiBaseUrl } from "./authHelper.js";
+import { fetchAuthenticated, getUser } from "./util/authHelper.js";
+import { apiBaseUrl, connectCommandTemplate } from "./util/resources.js";
 
 const deleteContainerModalBodyDefaultText = "Do you really want to delete the Ghost Server '{name}'? This cannot be reverted!";
-
-const connectCommandTemplate = "ghost_connect p2-ghost-server.ddnss.de {ws_port}";
 
 const cardTemplate = `
 <div class="card">
