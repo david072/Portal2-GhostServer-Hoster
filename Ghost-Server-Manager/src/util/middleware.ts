@@ -9,16 +9,15 @@ const docker = new Docker();
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
 	logger.info({ label: "authMiddleware", message: `Validating request to ${req.url}` });
 
-	const authHeader = req.headers["authorization"];
-	const parts = authHeader.split(' ');
-	if (parts[0] !== "Basic") {
-		logger.info({ label: "authMiddleware", message: `Validation failed! Unknown authorization type ${parts[0]}. Authorization Header: ${authHeader}` });
-		res.status(400).send();
+	const authToken = req.cookies["authToken"];
+	if (!authToken) {
+		logger.info({ label: "authMiddleware", message: "Validation failed! authToken not given" });
+		res.status(401).send();
 		return;
 	}
 
 	await authOpenDatabase();
-	const user = await getUser(parts[1]);
+	const user = await getUser(authToken);
 	if (!user) {
 		logger.info({ label: "authMiddleware", message: "Validation failed! authToken not valid" });
 		res.status(401).send();

@@ -36,22 +36,22 @@ router.post("/register", async (req, res) => {
 	res.status(201).send();
 });
 
-router.get("/generateAuthToken", async (req, res) => {
+router.post("/generateAuthToken", async (req, res) => {
 	logger.info({ label: "generateAuthToken", message: "Route called" });
 
-	if (!req.query.hasOwnProperty("email")) {
+	if (!("email" in req.body)) {
 		logger.info({ label: "generateAuthToken", message: "No email in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
-	else if (!req.query.hasOwnProperty("password")) {
+	else if (!("password" in req.body)) {
 		logger.info({ label: "generateAuthToken", message: "No password in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
 
-	const email = req.query.email.toString();
-	const password = req.query.password.toString();
+	const email = req.body.email.toString();
+	const password = req.body.password.toString();
 
 	const authToken = await generateAuthToken(email, password);
 	if (!authToken) {
@@ -62,11 +62,7 @@ router.get("/generateAuthToken", async (req, res) => {
 
 	logger.info({ label: "generateAuthToken", message: "Success!" });
 
-	// FIXME: Don't send in plain text?
-	res.status(200).json({
-		authToken: authToken[0],
-		expirationDate: authToken[1]
-	});
+	res.cookie('authToken', authToken, { maxAge: 7 * 24 * 60 * 60, httpOnly: true, secure: true, sameSite: "lax" }).sendStatus(200);
 });
 
 router.get("/user", authMiddleware, (req, res) => {

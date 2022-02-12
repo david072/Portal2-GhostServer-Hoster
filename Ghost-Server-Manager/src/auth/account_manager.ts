@@ -4,6 +4,7 @@ import { join } from "path";
 import { logger } from "../util/logger";
 import { createHash, randomBytes } from "crypto";
 import { addDays } from "date-fns";
+import bcrypt from "bcrypt";
 
 const dbPath = join(__dirname, "../../db/users.db");
 
@@ -69,7 +70,7 @@ export async function dumpDatabase() {
 export async function createUser(email: string, password: string): Promise<boolean> {
 	if (!db) return;
 
-	const passwordHash = getPasswordHash(password);
+	const passwordHash = await bcrypt.hash(password, 10); // Last parameter is the number of salt rounds, 10 is fine
 
 	const row = await db.get(`SELECT * FROM users WHERE email = ?`, [email]);
 	if (row) {
@@ -83,21 +84,24 @@ export async function createUser(email: string, password: string): Promise<boole
 	return true;
 }
 
-export async function generateAuthToken(email: string, password: string): Promise<[string, number] | undefined> {
+export async function generateAuthToken(email: string, password: string): Promise<string | undefined> {
 	if (!db) return;
 
-	const passwordHash = getPasswordHash(password);
-	console.log(passwordHash);
-
-	const row = await db.get("SELECT * FROM users WHERE email = ? AND passwordHash = ?", [email, passwordHash]);
+	const row = await db.get("SELECT * FROM users WHERE email = ?", [email]);
 	if (!row) return;
+
+	const hash = row.passwordHash;
+
+	const match = await bcrypt.compare(password, row.passwordHash);
+
+	if (!match) return;
 
 	const authToken = randomBytes(30).toString('hex');
 	// Hint: Parse expirationDate with new Date(expirationDate) :^)
 	const expirationDate = addDays(Date.now(), 7).getTime();
 	await db.run(`INSERT INTO auth_tokens (user_id, token, expirationDate) VALUES (${row.id}, '${authToken}', ${expirationDate});`);
 
-	return [authToken, expirationDate];
+	return authToken;
 }
 
 export async function getUser(authToken: string): Promise<User | undefined> {
@@ -118,8 +122,4 @@ export async function getUser(authToken: string): Promise<User | undefined> {
 	const userRow = await db.get("SELECT * FROM users WHERE id = ?", [authTokenRow.user_id]);
 	if (!userRow) return;
 	return User.fromRow(userRow);
-}
-
-function getPasswordHash(password: string): string {
-	return createHash('sha256').update(password).digest('base64');
 }

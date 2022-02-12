@@ -1,5 +1,3 @@
-import { apiBaseUrl } from "./util/resources.js";
-
 $('#login-form').submit((event) => {
     event.preventDefault();
     $('#submit-button').prop('disabled', true);
@@ -7,7 +5,7 @@ $('#login-form').submit((event) => {
     const email = $('#email').val().trim();
     const password = $('#password').val().trim();
 
-    fetch(`${apiBaseUrl}/auth/generateAuthToken?email=${email}&password=${password}`, { method: "GET" })
+    fetch(`/auth/generateAuthToken`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({email: email, password: password}) })
         .then(async (res) => {
             if (res.status !== 200) {
                 if (res.status === 404) M.toast({ html: "This account does not exist!" });
@@ -17,9 +15,6 @@ $('#login-form').submit((event) => {
                 $('#submit-button').prop('disabled', false);
                 return;
             }
-
-            const json = await res.json();
-            document.cookie = `authToken=${json.authToken};expires=${new Date(json.expirationDate).toUTCString()};`;
 
             const redirectTarget = new URLSearchParams(window.location.search).get("target");
             if (redirectTarget === null) {

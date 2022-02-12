@@ -4,10 +4,18 @@ import cors from "cors";
 import { router as authRouter } from "./auth/auth_router";
 import { router as apiRouter } from "./api/api_router";
 import { router as containerRouter } from "./api/container_router";
+import path from "path";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 app.use(cors());
+
+app.use(express.static(path.join(__dirname, '../web')));
+
+app.use(cookieParser());
+app.use(bodyParser.json({ limit: '20mb' }))
 
 // Authentication routes
 app.use("/auth", authRouter);

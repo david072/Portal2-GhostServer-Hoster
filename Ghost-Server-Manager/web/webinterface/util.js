@@ -1,5 +1,4 @@
 import { fetchAuthenticated } from "../util/authHelper.js";
-import { apiBaseUrl } from "../util/resources.js";
 
 export let containerId = undefined;
 
@@ -7,7 +6,7 @@ export async function validateContainerId() {
     getContainerId();
     if (containerId === undefined) return;
 
-    const response = await fetchAuthenticated(`${apiBaseUrl}/api/validateContainerId?id=${containerId}`, "GET");
+    const response = await fetchAuthenticated(`/api/validateContainerId?id=${containerId}`, "GET");
 
     if (response.status !== 200) return null;
     else return await response.json();
@@ -17,7 +16,7 @@ export function sendToContainer(url, method, redirect = true) {
     getContainerId();
     if (containerId === undefined) return;
 
-    return fetchAuthenticated(`${apiBaseUrl}/container${url}${url.indexOf("?") === -1 ? "?" : "&"}id=${containerId}`, method, redirect);
+    return fetchAuthenticated(`/container${url}${url.indexOf("?") === -1 ? "?" : "&"}id=${containerId}`, method, redirect);
 }
 
 export function getContainerId() {

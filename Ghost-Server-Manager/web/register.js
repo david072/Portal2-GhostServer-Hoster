@@ -1,5 +1,3 @@
-import { apiBaseUrl } from "./util/resources.js";
-
 $(document).ready(() => {
 	$('#confirm-password').on("input", updateConfirmPasswordValidity);
 	$('#password').on("input", updateConfirmPasswordValidity);
@@ -32,7 +30,7 @@ $('#register-form').submit((event) => {
 		return;
 	}
 
-	fetch(`${apiBaseUrl}/auth/register?email=${email}&password=${password}`, { method: "POST" })
+	fetch(`/auth/register?email=${email}&password=${password}`, { method: "POST" })
 		.then((res) => {
 			if (res.status !== 201) {
 				if (res.status === 409) M.toast({ html: "An account with this email already exists!" });
