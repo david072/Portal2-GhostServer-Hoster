@@ -5,7 +5,7 @@ $('#login-form').submit((event) => {
     const email = $('#email').val().trim();
     const password = $('#password').val().trim();
 
-    fetch(`/auth/generateAuthToken?email=${email}&password=${password}`, { method: "GET" })
+    fetch(`/auth/generateAuthToken`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({email: email, password: password}) })
         .then(async (res) => {
             if (res.status !== 200) {
                 if (res.status === 404) M.toast({ html: "This account does not exist!" });

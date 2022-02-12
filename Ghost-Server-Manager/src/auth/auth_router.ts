@@ -36,22 +36,22 @@ router.post("/register", async (req, res) => {
 	res.status(201).send();
 });
 
-router.get("/generateAuthToken", async (req, res) => {
+router.post("/generateAuthToken", async (req, res) => {
 	logger.info({ label: "generateAuthToken", message: "Route called" });
 
-	if (!req.query.hasOwnProperty("email")) {
+	if (!("email" in req.body)) {
 		logger.info({ label: "generateAuthToken", message: "No email in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
-	else if (!req.query.hasOwnProperty("password")) {
+	else if (!("password" in req.body)) {
 		logger.info({ label: "generateAuthToken", message: "No password in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
 
-	const email = req.query.email.toString();
-	const password = req.query.password.toString();
+	const email = req.body.email.toString();
+	const password = req.body.password.toString();
 
 	const authToken = await generateAuthToken(email, password);
 	if (!authToken) {
