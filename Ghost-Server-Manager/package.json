@@ -19,6 +19,7 @@
     "@types/sqlite3": "^3.1.8",
     "axios": "^0.25.0",
     "bcrypt": "^5.0.1",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "date-fns": "^2.28.0",
     "dockerode": "^3.3.1",
