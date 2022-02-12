@@ -1,5 +1,5 @@
 import { fetchAuthenticated, getUser } from "./util/authHelper.js";
-import { apiBaseUrl, connectCommandTemplate } from "./util/resources.js";
+import { connectCommandTemplate } from "./util/resources.js";
 
 const deleteContainerModalBodyDefaultText = "Do you really want to delete the Ghost Server '{name}'? This cannot be reverted!";
 
@@ -49,7 +49,7 @@ $('#refresh-containers-btn').click(() => {
 });
 
 async function listContainers() {
-	const containers = await (await fetchAuthenticated(`${apiBaseUrl}/api/list`, "GET")).json();
+	const containers = await (await fetchAuthenticated(`/api/list`, "GET")).json();
 
 	$('#cards').empty();
 	let index = 1;
@@ -93,7 +93,7 @@ $('#delete-container-modal-confirm-btn').click(async () => {
 	if (idToDelete === undefined || nameToDelete === undefined) return;
 
 	M.toast({ html: `Deleting Ghost Server '${nameToDelete}'...` });
-	const res = await fetchAuthenticated(`${apiBaseUrl}/api/delete?id=${idToDelete}`, "GET");
+	const res = await fetchAuthenticated(`/api/delete?id=${idToDelete}`, "GET");
 	if (res.status !== 200) {
 		if (res.status === 404) M.toast({ html: "The container was not found!" });
 		else M.toast({ html: `An error occured deleting Ghost Server ${nameToDelete}` });

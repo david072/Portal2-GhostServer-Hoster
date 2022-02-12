@@ -139,7 +139,6 @@
 
 	<script type="module">
 		import { fetchAuthenticated } from "../util/authHelper.js";
-		import { apiBaseUrl } from "../util/resources.js";
 
 		$('#create-server-form').submit(async (event) => {
 			event.preventDefault();
@@ -148,7 +147,7 @@
 			$('#form').hide();
 			$('#loading').show();
 
-			const res = await fetchAuthenticated(`${apiBaseUrl}/api/create?name=${name}`, "POST");
+			const res = await fetchAuthenticated(`/api/create?name=${name}`, "POST");
 			if (res.status !== 201) {
 				$('#loading').hide();
 				if (res.status === 507) {

@@ -1,7 +1,5 @@
-import { apiBaseUrl } from "./resources.js";
-
 export async function getUser() {
-	const res = await fetchAuthenticated(`${apiBaseUrl}/auth/user`, "GET", false);
+	const res = await fetchAuthenticated(`/auth/user`, "GET", false);
 	if (res === undefined) return undefined;
 	if (res.status !== 200) return undefined;
 

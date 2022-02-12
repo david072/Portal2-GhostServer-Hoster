@@ -1,5 +1,5 @@
 import { getUser, fetchAuthenticated } from "../util/authHelper.js";
-import { apiBaseUrl, connectCommandTemplate } from "../util/resources.js";
+import { connectCommandTemplate } from "../util/resources.js";
 import { validateContainerId, sendToContainer, containerId, getContainerId } from "./util.js";
 
 $(document).ready(async () => {
@@ -72,7 +72,7 @@ $('#stop-server-modal-accept-button').click(async (event) => {
 	M.toast({ html: "Stopping this Ghost Server..." });
 
 	if (containerId === undefined) getContainerId();
-	const res = await fetchAuthenticated(`${apiBaseUrl}/api/delete?id=${containerId}`, "GET");
+	const res = await fetchAuthenticated(`/api/delete?id=${containerId}`, "GET");
 
 	if (res.status !== 200) {
 		if (res.status === 404) M.toast({ html: "The container was not found!" });
