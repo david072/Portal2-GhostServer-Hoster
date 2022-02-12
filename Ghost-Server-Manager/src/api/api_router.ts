@@ -5,7 +5,7 @@ import Docker from "dockerode";
 import { authMiddleware, containerAuthMiddleware } from "../util/middleware";
 import { closeDatabase, insertContainer, getAllColumnValues, getAllContainers, updateDatabase, deleteContainer } from "./container_db_manager";
 
-const MAX_NUMBER_OF_GHOST_SERVERS = 5;
+const MAX_NUMBER_OF_GHOST_SERVERS = 10;
 
 const docker = new Docker();
 export const router = express.Router();
@@ -37,7 +37,7 @@ router.post("/create", async (req, res) => {
 	const wsPorts = await getAllColumnValues<number>("ws_port");
 
 	const port = randomRangeNotIn(5000, 10000, ports);
-	const wsPort = randomRangeNotIn(45000, 45006, wsPorts);
+	const wsPort = randomRangeNotIn(45000, 50000, wsPorts);
 	if (port === undefined || wsPort === undefined) {
 		logger.info({ label: "create_instance", message: "No available ports. Cancelling." });
 		res.status(507).send();
