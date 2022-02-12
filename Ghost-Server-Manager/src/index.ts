@@ -4,10 +4,13 @@ import cors from "cors";
 import { router as authRouter } from "./auth/auth_router";
 import { router as apiRouter } from "./api/api_router";
 import { router as containerRouter } from "./api/container_router";
+import path from "path";
 
 const app = express();
 
 app.use(cors());
+
+app.use(express.static(path.join(__dirname, '../web')));
 
 // Authentication routes
 app.use("/auth", authRouter);
