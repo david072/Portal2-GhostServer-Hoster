@@ -84,7 +84,7 @@ export async function createUser(email: string, password: string): Promise<boole
 	return true;
 }
 
-export async function generateAuthToken(email: string, password: string): Promise<[string, number] | undefined> {
+export async function generateAuthToken(email: string, password: string): Promise<string | undefined> {
 	if (!db) return;
 
 	const row = await db.get("SELECT * FROM users WHERE email = ?", [email]);
@@ -101,7 +101,7 @@ export async function generateAuthToken(email: string, password: string): Promis
 	const expirationDate = addDays(Date.now(), 7).getTime();
 	await db.run(`INSERT INTO auth_tokens (user_id, token, expirationDate) VALUES (${row.id}, '${authToken}', ${expirationDate});`);
 
-	return [authToken, expirationDate];
+	return authToken;
 }
 
 export async function getUser(authToken: string): Promise<User | undefined> {

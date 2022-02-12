@@ -16,9 +16,6 @@ $('#login-form').submit((event) => {
                 return;
             }
 
-            const json = await res.json();
-            document.cookie = `authToken=${json.authToken};expires=${new Date(json.expirationDate).toUTCString()};`;
-
             const redirectTarget = new URLSearchParams(window.location.search).get("target");
             if (redirectTarget === null) {
                 window.location.href = "./index.html";

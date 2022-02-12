@@ -62,11 +62,7 @@ router.post("/generateAuthToken", async (req, res) => {
 
 	logger.info({ label: "generateAuthToken", message: "Success!" });
 
-	// FIXME: Don't send in plain text?
-	res.status(200).json({
-		authToken: authToken[0],
-		expirationDate: authToken[1]
-	});
+	res.cookie('authToken', authToken, { maxAge: 7 * 24 * 60 * 60, httpOnly: true, secure: true, sameSite: "lax" }).sendStatus(200);
 });
 
 router.get("/user", authMiddleware, (req, res) => {
