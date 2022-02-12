@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+	<title>Your Ghost Servers</title>
+</head>
+
+<body>
+	<style>
+		#delete-btn:hover {
+			color: #ff8080 !important;
+		}
+	</style>
+
+	<nav class="nav-title">
+		<a class="brand-logo center">Ghost Servers</a>
+		<ul id="nav-mobile" class="right hide-on-med-and-down">
+			<li><a id="logout-btn" href="#">Logout</a></li>
+		</ul>
+	</nav>
+
+	<main>
+		<div class="container">
+			<div class="section"></div>
+
+			<div class="row">
+				<a class="btn waves-effect" href="./create/create_server.html"><i class="material-icons left">add</i>New
+					Ghost Server</a>
+				<button id="refresh-containers-btn" class="right btn-flat waves-effect btn-floating"><i
+						class="material-icons black-text">refresh</i></button>
+			</div>
+
+			<div class="section"></div>
+			<div class="row">
+				<div id="cards" class="col s12">
+					<!-- Ghost Server cards are filled in by JS here -->
+				</div>
+				<h5 id="no-containers-text" class="center-align">No Ghost Servers!</h5>
+			</div>
+
+			<div id="delete-container-modal" class="modal">
+				<div class="modal-content">
+					<h4>Delete Ghost Server</h4>
+					<p id="delete-container-modal-body">Do you really want to delete the Ghost Server '{name}'? This
+						cannot be reverted!</p>
+				</div>
+				<div class="modal-footer">
+					<button class="modal-close waves-effect btn-flat">Cancel</button>
+					<button id="delete-container-modal-confirm-btn"
+						class="modal-close waves-effect btn-flat red-text">Delete</button>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script type="module" src="./index.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!--Import Google Icon Font-->
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<link rel="stylesheet" href="./style.css">
+
+	<title>Webinterface - General</title>
+</head>
+
+<body>
+	<nav id="nav" class="nav-title" style="display: none;">
+		<a class="brand-logo center">Ghost Server</a>
+	</nav>
+
+	<ul id="slide-out" class="sidenav sidenav-fixed" style="display: none;">
+		<li><a href="javascript:void(0)" class="active red lighten-2 white-text">General</a></li>
+		<li><a id="slide-out-player-management-btn" href="javascript:void(0)">Player Management</a></li>
+	</ul>
+
+	<div id="main-content" style="display: none;">
+		<div class="col s12 container" style="margin-top: 2rem;">
+			<div class="section">
+				<div class="row s12">
+					<div class="col"><a id="start-countdown-button" class="waves-effect waves-light btn"><i
+								class="material-icons left">play_arrow</i>Start countdown</a></div>
+					<div class="col right"><a class="modal-trigger waves-effect waves-light btn red"
+							href="#stop-server-modal"><i class="material-icons left">close</i>Stop server</a></div>
+
+					<!-- Stop server modal -->
+					<div id="stop-server-modal" class="modal">
+						<div class="modal-content">
+							<h4>Stop server</h4>
+							<p>Do you really want to stop this server? Stopping the ghost server will delete the entire
+								server, which cannot be reverted!</p>
+						</div>
+						<div class="modal-footer">
+							<button class="modal-close waves-effect waves-green btn-flat">Cancel</button>
+							<button id="stop-server-modal-accept-button"
+								class="waves-effect waves-green btn-flat red-text">Stop
+								Server</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="section">
+					<h5>Connect</h5>
+					<div class="divider"></div>
+					<p>To connect, paste the text blow into your game's console and hit enter:</p>
+
+					<div class="row s12 valign-wrapper"
+						style="margin: 10px 0 0 0; padding: 10px; background-color: #F8F9FA; border-radius: 10px; border: 1px solid #E8EAED;">
+						<span id="connect-command-field"></span>
+						<!-- <button id="copy-connect-cmd" class="btn-flat waves-effect" style="padding: 0 8px 0 8px; margin-left: 15px"><i
+													class="material-icons" data-wsport="{ws_port}">content_copy</i></button>-->
+					</div>
+				</div>
+				<div class="section"></div>
+
+				<div class="col">
+					<h5>Settings</h5>
+				</div>
+				<div class="divider"></div>
+				<div class="section"></div>
+				<div class="col s12">
+					<div class="row">
+						<div class="col s3 input-field">
+							<input required type="number" min="1" max="60" id="countdown-duration" class="validate">
+							<label for="countdown-duration">Countdown Duration</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s4 input-field">
+							<textarea id="pre-countdown-cmd" class="materialize-textarea"></textarea>
+							<label for="pre-countdown-cmd">Pre-Countdown Commands</label>
+						</div>
+						<div class="col s4 input-field">
+							<textarea id="post-countdown-cmd" class="materialize-textarea"></textarea>
+							<label for="post-countdown-cmd">Post-Countdown Commands</label>
+						</div>
+					</div>
+					<button id="save-settings-btn" class="btn waves-effect waves-light" type="submit">Save</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<main id="status-displays">
+		<center>
+			<div id="loading">
+				<div class="section"></div>
+				<div class="preloader-wrapper medium active">
+					<div class="spinner-layer spinner-blue">
+						<div class="circle-clipper left">
+							<div class="circle"></div>
+						</div>
+						<div class="gap-patch">
+							<div class="circle"></div>
+						</div>
+						<div class="circle-clipper right">
+							<div class="circle"></div>
+						</div>
+					</div>
+
+					<div class="spinner-layer spinner-red">
+						<div class="circle-clipper left">
+							<div class="circle"></div>
+						</div>
+						<div class="gap-patch">
+							<div class="circle"></div>
+						</div>
+						<div class="circle-clipper right">
+							<div class="circle"></div>
+						</div>
+					</div>
+
+					<div class="spinner-layer spinner-yellow">
+						<div class="circle-clipper left">
+							<div class="circle"></div>
+						</div>
+						<div class="gap-patch">
+							<div class="circle"></div>
+						</div>
+						<div class="circle-clipper right">
+							<div class="circle"></div>
+						</div>
+					</div>
+
+					<div class="spinner-layer spinner-green">
+						<div class="circle-clipper left">
+							<div class="circle"></div>
+						</div>
+						<div class="gap-patch">
+							<div class="circle"></div>
+						</div>
+						<div class="circle-clipper right">
+							<div class="circle"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div id="failure" style="display: none;">
+				<div class="section"></div>
+				<div class="row">
+					<i class="material-icons red-text">cancel</i>
+					<h5 id="failure-text" style="display: inline; margin-left: 1rem;">The requested Ghost Server could
+						not be found!</h5>
+				</div>
+				<span>Please return to <a href="../index.html">home</a>.</span>
+			</div>
+		</center>
+	</main>
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+	<script src="./index.js" type="module"></script>
+</body>
+
+</html>
