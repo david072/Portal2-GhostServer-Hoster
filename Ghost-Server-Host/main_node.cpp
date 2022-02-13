@@ -2,7 +2,7 @@
 #include <string>
 #include <iostream>
 
-#include "networkmanager.h"
+#include "GhostServer/GhostServer/networkmanager.h"
 
 static NetworkManager g_network;
 
