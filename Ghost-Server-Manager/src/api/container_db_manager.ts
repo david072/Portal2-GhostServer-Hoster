@@ -63,8 +63,8 @@ export async function insertContainer(id: string, port: number, wsPort: number, 
 		);`);
 }
 
-export async function getAllContainers(): Promise<Container[]> {
-	const rows = await db.all("SELECT * FROM containers");
+export async function getContainersForUser(userId: number) {
+	const rows = await db.all("SELECT * FROM containers WHERE user_id = ?", [userId]);
 	return rows.map((row) => Container.fromRow(row));
 }
 

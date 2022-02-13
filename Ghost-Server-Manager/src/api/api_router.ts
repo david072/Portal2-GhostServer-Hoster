@@ -3,7 +3,7 @@ import { logger } from "../util/logger";
 import axios from "axios";
 import Docker from "dockerode";
 import { authMiddleware, containerAuthMiddleware } from "../util/middleware";
-import { closeDatabase, insertContainer, getAllColumnValues, getAllContainers, updateDatabase, deleteContainer } from "./container_db_manager";
+import { closeDatabase, insertContainer, getAllColumnValues, updateDatabase, deleteContainer, getContainersForUser } from "./container_db_manager";
 
 const MAX_NUMBER_OF_GHOST_SERVERS = 10;
 
@@ -105,10 +105,10 @@ function waitForContainerStart(container: Docker.Container): Promise<void> {
 	});
 }
 
-router.get("/list", async (_, res) => {
+router.get("/list", async (req, res) => {
 	await updateDb();
 
-	const containers = await getAllContainers();
+	const containers = await getContainersForUser(JSON.parse(req.query.user.toString()).id);
 	res.status(200).json(containers);
 });
 
