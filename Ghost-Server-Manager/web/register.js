@@ -30,17 +30,20 @@ $('#register-form').submit((event) => {
 		return;
 	}
 
-	fetch(`/auth/register?email=${email}&password=${password}`, { method: "POST" })
-		.then((res) => {
-			if (res.status !== 201) {
-				if (res.status === 409) M.toast({ html: "An account with this email already exists!" });
-				else M.toast({ html: "An error occured" });
+	fetch("/auth/register", {
+		method: "POST",
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ email: email, password: password })
+	}).then((res) => {
+		if (res.status !== 201) {
+			if (res.status === 409) M.toast({ html: "An account with this email already exists!" });
+			else M.toast({ html: "An error occured" });
 
-				console.log(`Error creating account. Status other than 201 received: ${res.status}`);
-				$('#submit-button').prop('disabled', false);
-				return;
-			}
+			console.log(`Error creating account. Status other than 201 received: ${res.status}`);
+			$('#submit-button').prop('disabled', false);
+			return;
+		}
 
-			window.location.href = "./login.html";
-		});
+		window.location.href = "./login.html";
+	});
 });

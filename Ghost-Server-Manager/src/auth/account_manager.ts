@@ -73,14 +73,10 @@ export async function createUser(email: string, password: string): Promise<boole
 	const passwordHash = await bcrypt.hash(password, 10); // Last parameter is the number of salt rounds, 10 is fine
 
 	const row = await db.get(`SELECT * FROM users WHERE email = ?`, [email]);
-	if (row) {
-		logger.info({ source: "Account Manager - Insert User", message: "User creation failed. User with email already exists." });
-		return false;
-	}
+	if (row) return false;
 
 	await db.run(`INSERT INTO users (email, passwordHash) VALUES ('${email}', '${passwordHash}');`);
 
-	logger.info({ source: "Account Manager - Insert User", message: `Successfully inserted the user. Email: ${email}, passwordHash: ${passwordHash}` });
 	return true;
 }
 

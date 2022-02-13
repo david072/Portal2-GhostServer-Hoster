@@ -13,22 +13,23 @@ router.use(async (req, res, next) => {
 router.post("/register", async (req, res) => {
 	logger.info({ source: "register", message: "Route called" });
 
-	if (!req.query.hasOwnProperty("email")) {
-		logger.info({ source: "register", message: "No email in query. Exiting." });
+	if (!("email" in req.body)) {
+		logger.warn({ source: "register", message: "No email in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
-	else if (!req.query.hasOwnProperty("password")) {
-		logger.info({ source: "register", message: "No password in query. Exiting." });
+	else if (!("password" in req.body)) {
+		logger.warn({ source: "register", message: "No password in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
 
-	const email = req.query.email.toString();
-	const password = req.query.password.toString();
+	const email = req.body.email.toString();
+	const password = req.body.password.toString();
 
 	const successful = await createUser(email, password);
 	if (!successful) {
+		logger.warn({ source: "register", message: "The user already exists" });
 		res.status(409).send();
 		return;
 	}
@@ -40,12 +41,12 @@ router.post("/generateAuthToken", async (req, res) => {
 	logger.info({ source: "generateAuthToken", message: "Route called" });
 
 	if (!("email" in req.body)) {
-		logger.info({ source: "generateAuthToken", message: "No email in query. Exiting." });
+		logger.warn({ source: "generateAuthToken", message: "No email in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
 	else if (!("password" in req.body)) {
-		logger.info({ source: "generateAuthToken", message: "No password in query. Exiting." });
+		logger.warn({ source: "generateAuthToken", message: "No password in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
@@ -55,7 +56,7 @@ router.post("/generateAuthToken", async (req, res) => {
 
 	const authToken = await generateAuthToken(email, password);
 	if (!authToken) {
-		logger.info({ source: "generateAuthToken", message: "Fail! User not found." });
+		logger.warn({ source: "generateAuthToken", message: "Fail! User not found." });
 		res.status(404).send();
 		return;
 	}

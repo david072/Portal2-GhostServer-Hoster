@@ -10,8 +10,6 @@ const myFormat = format.printf(({ level, message, label, timestamp, ...rest }) =
 	return result;
 });
 
-console.log(join(__dirname, '../logs/ghost-server-manager.log'));
-
 export const logger = createLogger({
 	level: 'info',
 	transports: [
