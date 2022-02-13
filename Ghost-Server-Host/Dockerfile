@@ -3,7 +3,7 @@
 FROM ghost-server-hoster_base:latest
 
 COPY . ./app/
-WORKDIR /app/GhostServer/
+WORKDIR /app
 
 RUN \
     # Install dependencies
@@ -17,8 +17,7 @@ RUN \
     # Build the C++ addon
     node-gyp configure && \
     node-gyp build && \
-    cd ../ && \
-    mv /app/GhostServer/build/Release/addon.node . && \
+    mv /app/build/Release/addon.node . && \
     npm install && \
     npm run build
 

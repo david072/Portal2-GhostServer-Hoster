@@ -1,0 +1,3 @@
+[submodule "Ghost-Server-Host/GhostServer"]
+	path = Ghost-Server-Host/GhostServer
+	url = https://github.com/p2sr/GhostServer
