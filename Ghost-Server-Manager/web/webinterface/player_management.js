@@ -1,4 +1,4 @@
-import { getUser } from "../authHelper.js";
+import { getUser } from "../util/authHelper.js";
 import { validateContainerId, sendToContainer, getContainerId, containerId } from "./util.js";
 
 let actionModalAcceptedAction = undefined;

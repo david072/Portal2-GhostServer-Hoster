@@ -10,7 +10,7 @@ const cardTemplate = `
 		<div class="divider"></div>
 
 		<h6>Connecting:</h6>
-		<p>To connect, paste the text blow into your game's console and hit enter:</p>
+		<p>To connect, paste the text below into your game's console and hit enter:</p>
 
 		<div class="row s12 valign-wrapper"
 			style="margin: 10px 0 0 0; padding: 10px; background-color: #F8F9FA; border-radius: 10px; border: 1px solid #E8EAED;">
