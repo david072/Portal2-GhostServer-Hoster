@@ -1,5 +1,6 @@
 import { fetchAuthenticated, getUser } from "./util/authHelper.js";
 import { connectCommandTemplate } from "./util/resources.js";
+import { copyConnectCmdBtnListener } from "./util/clipboardHelper.js";
 
 const deleteContainerModalBodyDefaultText = "Do you really want to delete the Ghost Server '{name}'? This cannot be reverted!";
 
@@ -14,9 +15,9 @@ const cardTemplate = `
 
 		<div class="row s12 valign-wrapper"
 			style="margin: 10px 0 0 0; padding: 10px; background-color: #F8F9FA; border-radius: 10px; border: 1px solid #E8EAED;">
-			<span>${connectCommandTemplate}</span>
-			<!-- <button id="copy-connect-cmd" class="btn-flat waves-effect" style="padding: 0 8px 0 8px; margin-left: 15px"><i
-					class="material-icons" data-wsport="{ws_port}">content_copy</i></button>-->
+			<span id="connect-command-field">${connectCommandTemplate}</span>
+			<button id="copy-connect-cmd" class="btn-flat waves-effect" style="padding: 0 8px 0 8px; margin-left: 15px"><i
+					id="copy-connect-cmd-icon" class="material-icons" data-wsport="{ws_port}">content_copy</i></button>
 		</div>
     </div>
     <div class="card-action">
@@ -65,9 +66,10 @@ async function listContainers() {
 	else $('#no-containers-text').hide();
 
 	$('#delete-btn').click(deleteBtnListener);
+	$('#copy-connect-cmd').click(copyConnectCmdBtnListener);
 }
 
-function getCardHtml(id, name, port, wsPort) {
+function getCardHtml(id, name, wsPort) {
 	return cardTemplate
 		.replace("{name}", name)
 		.replace("{data_name}", `\"${name}\"`)
@@ -80,7 +82,6 @@ function getCardHtml(id, name, port, wsPort) {
 let idToDelete = undefined;
 let nameToDelete = undefined;
 
-$('#delete-btn').click(deleteBtnListener);
 function deleteBtnListener() {
 	idToDelete = $(this).data().containerid;
 	nameToDelete = $(this).data().name;

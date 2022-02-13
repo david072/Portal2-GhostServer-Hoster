@@ -1,4 +1,5 @@
 import { getUser, fetchAuthenticated } from "../util/authHelper.js";
+import { copyConnectCmdBtnListener } from "../util/clipboardHelper.js";
 import { connectCommandTemplate } from "../util/resources.js";
 import { validateContainerId, sendToContainer, containerId, getContainerId } from "./util.js";
 
@@ -44,6 +45,8 @@ async function fetchSettings() {
 	$('#post-countdown-cmd').val(json.postCommands);
 	M.updateTextFields();
 }
+
+$('#copy-connect-cmd').click(copyConnectCmdBtnListener);
 
 $('#save-settings-btn').click(async () => {
 	$('#save-settings-btn').addClass("disabled");
