@@ -24,9 +24,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 		return;
 	}
 
-	req.query.user = JSON.stringify(user);
-
 	logger.info({ source: "authMiddleware", message: "Request validated! Passing request on..." });
+
+	req.body.user = user;
 	next();
 }
 
@@ -36,7 +36,7 @@ export async function containerAuthMiddleware(req: Request, res: Response, next:
 	await containerOpenDatabase();
 	await updateDb();
 
-	if (!req.query.hasOwnProperty("id")) {
+	if (!("id" in req.query)) {
 		logger.info({ source: "containerAuthMiddleware", message: "No id requested. Passing request on..." });
 		next();
 		return;
@@ -48,7 +48,7 @@ export async function containerAuthMiddleware(req: Request, res: Response, next:
 		res.status(404).send();
 		return;
 	}
-	else if (container.userId !== JSON.parse(req.query.user.toString()).id) {
+	else if (container.userId !== req.body.user.id) {
 		logger.info({ source: "containerAuthMiddleware", message: "Validation failed! User does not own the container" });
 		res.status(401).send();
 		return;
@@ -56,7 +56,7 @@ export async function containerAuthMiddleware(req: Request, res: Response, next:
 
 	logger.info({ source: "containerAuthMiddleware", message: "Request validated! Passing request on..." });
 
-	req.query.container = JSON.stringify(container);
+	req.body.container = container;
 	next();
 }
 

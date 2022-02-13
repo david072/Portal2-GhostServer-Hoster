@@ -20,12 +20,8 @@ router.get("/settings", async (req, res) => {
 });
 
 router.put("/settings", async (req, res) => {
-	let query = "";
-	if (req.query.hasOwnProperty("preCommands")) query += `${query.length === 0 ? "?" : "&"}preCommands=${req.query.preCommands}`;
-	if (req.query.hasOwnProperty("postCommands")) query += `${query.length === 0 ? "?" : "&"}postCommands=${req.query.postCommands}`;
-	if (req.query.hasOwnProperty("duration")) query += `${query.length === 0 ? "?" : "&"}duration=${req.query.duration}`;
-
-	await sendToContainer(req, `/settings${query}`, "PUT");
+	let query = `preCommands=${req.query.preCommands || ""}&postCommands=${req.query.postCommands || ""}&duration=${req.query.duration || ""}`;
+	await sendToContainer(req, `/settings?${query}`, "PUT");
 	res.status(200).send();
 });
 
@@ -40,11 +36,11 @@ router.put("/banPlayer", async (req, res) => {
 	let idToBan: number | undefined;
 	let nameToBan: string | undefined;
 
-	if (req.query.hasOwnProperty("player_id")) {
+	if ("player_id" in req.query) {
 		idToBan = +req.query.player_id.toString();
 		logger.info({ source: "Container: banPlayer", message: `Banning player by id (${idToBan})` });
 	}
-	else if (req.query.hasOwnProperty("name")) {
+	else if ("name" in req.query) {
 		nameToBan = req.query.name.toString();
 		logger.info({ source: "Container: banPlayer", message: `Banning player by name (${nameToBan})` });
 	}
@@ -71,11 +67,11 @@ router.put("/disconnectPlayer", async (req, res) => {
 	let idToDisconnect: number | undefined;
 	let nameToDisconnect: string | undefined;
 
-	if (req.query.hasOwnProperty("player_id")) {
+	if ("player_id" in req.query) {
 		idToDisconnect = +req.query.player_id.toString();
 		logger.info({ source: "Container: disconnectPlayer", message: `Disconnecting player by id (${idToDisconnect})` });
 	}
-	else if (req.query.hasOwnProperty("name")) {
+	else if ("name" in req.query) {
 		nameToDisconnect = req.query.name.toString();
 		logger.info({ source: "Container: disconnectPlayer", message: `Disconnecting player by name (${nameToDisconnect})` });
 	}
@@ -84,8 +80,6 @@ router.put("/disconnectPlayer", async (req, res) => {
 		res.status(400).send();
 		return;
 	}
-
-	console.log(`idtd: ${idToDisconnect}, nametd: ${nameToDisconnect}`);
 
 	const response = await sendToContainer(req, `/disconnectPlayer?${idToDisconnect !== undefined ? `id=${idToDisconnect}` : `name=${nameToDisconnect}`}`, "PUT");
 	if (response.status !== 200) {
@@ -99,9 +93,8 @@ router.put("/disconnectPlayer", async (req, res) => {
 });
 
 function sendToContainer(req: Request, route: string, method: Method) {
-	const container = JSON.parse(req.query.container.toString());
 	return axios({
-		url: `http://localhost:${container.port}${route}`,
+		url: `http://localhost:${req.body.container.port}${route}`,
 		method: method
 	});
 }

@@ -65,8 +65,8 @@ router.post("/create", async (req, res) => {
 
 	logger.info({ source: "create_instance", message: "Container successfully started" });
 
-	const name = req.query.hasOwnProperty("name") ? req.query.name.toString() : ""
-	insertContainer(container.id, port, wsPort, JSON.parse(req.query.user.toString()).id, name);
+	const name = "name" in req.query ? req.query.name.toString() : ""
+	insertContainer(container.id, port, wsPort, req.body.user.id, name);
 
 	res.status(201).send();
 });
@@ -97,14 +97,14 @@ function waitForContainerStart(container: Docker.Container): Promise<void> {
 router.get("/list", async (req, res) => {
 	await updateDb();
 
-	const containers = await getContainersForUser(JSON.parse(req.query.user.toString()).id);
+	const containers = await getContainersForUser(req.body.user.id);
 	res.status(200).json(containers);
 });
 
 router.get("/delete", containerAuthMiddleware, async (req, res) => {
 	logger.info({ source: "delete", message: "Route called" });
 
-	const container = JSON.parse(req.query.container.toString());
+	const container = req.body.container;
 	await deleteContainer(container.id);
 	await stopContainer(container.containerId, container.port);
 

@@ -48,25 +48,6 @@ export async function closeDatabase() {
 	db = undefined;
 }
 
-export async function dumpDatabase() {
-	if (!db) return;
-
-	console.log(">>> Dump: 'users' database");
-
-	let rows = await db.all("SELECT * FROM users");
-	rows.forEach(row => {
-		console.log(`${row.id}: ${row.email} - ${row.passwordHash}`);
-	});
-
-
-	console.log(">>> Dump: 'auth_tokens' database");
-
-	rows = await db.all("SELECT * FROM auth_tokens");
-	rows.forEach(row => {
-		console.log(`${row.id}: ${row.user_id} > ${row.token} (${row.expirationDate})`);
-	});
-}
-
 export async function createUser(email: string, password: string): Promise<boolean> {
 	if (!db) return;
 

@@ -28,29 +28,28 @@ app.get("/settings", (_, res) => {
 });
 
 app.put("/settings", (req, res) => {
-	if (req.query.hasOwnProperty("preCommands")) preCountdownCommands = req.query.preCommands.toString();
-	if (req.query.hasOwnProperty("postCommands")) postCountdownCommands = req.query.postCommands.toString();
-	if (req.query.hasOwnProperty("duration")) countdownDuration = +req.query.duration;
+	if ("preCommands" in req.query) preCountdownCommands = req.query.preCommands.toString();
+	if ("postCommands" in req.query) postCountdownCommands = req.query.postCommands.toString();
+	if ("duration" in req.query) countdownDuration = +req.query.duration;
 	res.status(200).send("Settings updated!");
 });
 
-app.put("/startCountdown", (req, res) => {
-	console.log(`startCountdown prc: ${preCountdownCommands}, poc: ${postCountdownCommands}, cd: ${countdownDuration}`);
+app.put("/startCountdown", (_, res) => {
 	ghostServer.startCountdown(preCountdownCommands, postCountdownCommands, countdownDuration);
 	res.status(200).send("Countdown started");
 });
 
 app.get("/listPlayers", (_, res) => {
-	res.send(JSON.stringify(ghostServer.list()));
+	res.json(ghostServer.list());
 });
 
 app.put("/disconnectPlayer", (req, res) => {
-	if (req.query.hasOwnProperty("id")) {
+	if ("id" in req.query) {
 		ghostServer.disconnectId(+req.query.id);
 		res.status(200).send(`Player with id ${req.query.id} disconnected!`);
 		return;
 	}
-	else if (req.query.hasOwnProperty("name")) {
+	else if ("name" in req.query) {
 		ghostServer.disconnect(req.query.name.toString());
 		res.status(200).send(`Player with name ${req.query.name} disconnected!`);
 		return;
@@ -60,14 +59,12 @@ app.put("/disconnectPlayer", (req, res) => {
 });
 
 app.put("/banPlayer", (req, res) => {
-	console.log("banPlayer called");
-
-	if (req.query.hasOwnProperty("id")) {
+	if ("id" in req.query) {
 		ghostServer.banId(+req.query.id);
 		res.status(200).send(`Player with id ${req.query.id} banned!`);
 		return;
 	}
-	else if (req.query.hasOwnProperty("name")) {
+	else if ("name" in req.query) {
 		ghostServer.ban(req.query.name.toString());
 		res.status(200).send(`Player with name ${req.query.name} banned!`);
 		return;

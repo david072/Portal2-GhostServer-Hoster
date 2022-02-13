@@ -67,7 +67,7 @@ router.post("/generateAuthToken", async (req, res) => {
 });
 
 router.get("/user", authMiddleware, (req, res) => {
-	res.status(200).json(req.query.user);
+	res.status(200).json(req.body.user);
 });
 
 router.use(closeDatabase);
