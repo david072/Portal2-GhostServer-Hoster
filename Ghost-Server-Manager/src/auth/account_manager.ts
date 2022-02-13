@@ -74,13 +74,13 @@ export async function createUser(email: string, password: string): Promise<boole
 
 	const row = await db.get(`SELECT * FROM users WHERE email = ?`, [email]);
 	if (row) {
-		logger.info({ label: "Account Manager - Insert User", message: "User creation failed. User with email already exists." });
+		logger.info({ source: "Account Manager - Insert User", message: "User creation failed. User with email already exists." });
 		return false;
 	}
 
 	await db.run(`INSERT INTO users (email, passwordHash) VALUES ('${email}', '${passwordHash}');`);
 
-	logger.info({ label: "Account Manager - Insert User", message: `Successfully inserted the user. Email: ${email}, passwordHash: ${passwordHash}` });
+	logger.info({ source: "Account Manager - Insert User", message: `Successfully inserted the user. Email: ${email}, passwordHash: ${passwordHash}` });
 	return true;
 }
 

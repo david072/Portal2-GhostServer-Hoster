@@ -11,15 +11,15 @@ router.use(async (req, res, next) => {
 });
 
 router.post("/register", async (req, res) => {
-	logger.info({ label: "register", message: "Route called" });
+	logger.info({ source: "register", message: "Route called" });
 
 	if (!req.query.hasOwnProperty("email")) {
-		logger.info({ label: "register", message: "No email in query. Exiting." });
+		logger.info({ source: "register", message: "No email in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
 	else if (!req.query.hasOwnProperty("password")) {
-		logger.info({ label: "register", message: "No password in query. Exiting." });
+		logger.info({ source: "register", message: "No password in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
@@ -37,15 +37,15 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/generateAuthToken", async (req, res) => {
-	logger.info({ label: "generateAuthToken", message: "Route called" });
+	logger.info({ source: "generateAuthToken", message: "Route called" });
 
 	if (!("email" in req.body)) {
-		logger.info({ label: "generateAuthToken", message: "No email in query. Exiting." });
+		logger.info({ source: "generateAuthToken", message: "No email in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
 	else if (!("password" in req.body)) {
-		logger.info({ label: "generateAuthToken", message: "No password in query. Exiting." });
+		logger.info({ source: "generateAuthToken", message: "No password in query. Exiting." });
 		res.status(400).send();
 		return;
 	}
@@ -55,12 +55,12 @@ router.post("/generateAuthToken", async (req, res) => {
 
 	const authToken = await generateAuthToken(email, password);
 	if (!authToken) {
-		logger.info({ label: "generateAuthToken", message: "Fail! User not found." });
+		logger.info({ source: "generateAuthToken", message: "Fail! User not found." });
 		res.status(404).send();
 		return;
 	}
 
-	logger.info({ label: "generateAuthToken", message: "Success!" });
+	logger.info({ source: "generateAuthToken", message: "Success!" });
 
 	res.cookie('authToken', authToken, { maxAge: 7 * 24 * 60 * 60, httpOnly: true, secure: true, sameSite: "lax" }).sendStatus(200);
 });
