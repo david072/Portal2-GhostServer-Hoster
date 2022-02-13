@@ -1,30 +1,11 @@
-import { getUser, fetchAuthenticated } from "../util/authHelper.js";
+import { fetchAuthenticated } from "../util/authHelper.js";
 import { copyConnectCmdBtnListener } from "../util/clipboardHelper.js";
 import { connectCommandTemplate } from "../util/resources.js";
-import { validateContainerId, sendToContainer, containerId, getContainerId } from "./util.js";
+import { sendToContainer, containerId, getContainerId, authenticate } from "./util.js";
 
 $(document).ready(async () => {
-	const user = await getUser();
-	if (!user) {
-		window.location.href = `../login.html?target=${encodeURIComponent(window.location.href)}`;
-		return;
-	}
-
-	if (getContainerId() === undefined) {
-		$('#loading').hide();
-		$('#failure').show();
-		$('#failure-text').text("No container id found. (Query parameter 'id' missing)");
-		window.location.href = "../index.html";
-		return;
-	}
-
-	const container = await validateContainerId();
-	if (container === null) {
-		$('#loading').hide();
-		$('#failure').show();
-		window.location.href = "../index.html";
-		return;
-	}
+	const container = await authenticate();
+	if (container === undefined) return;
 
 	$('#connect-command-field').text(connectCommandTemplate.replace("{ws_port}", container.wsPort));
 
@@ -32,8 +13,6 @@ $(document).ready(async () => {
 	await fetchSettings();
 
 	$('#loading').hide();
-	$('#nav').show();
-	$('#slide-out').show();
 	$('#main-content').show();
 });
 

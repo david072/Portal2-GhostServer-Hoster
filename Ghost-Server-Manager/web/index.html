@@ -15,7 +15,16 @@
 <body>
 	<style>
 		#delete-btn:hover {
-			color: #ff8080 !important;
+			color: #ffbfbf !important;
+		}
+
+		#code {
+			margin: 10px 0 0 0;
+			padding: 10px;
+			background-color: #F8F9FA;
+			border-radius: 10px;
+			border: 1px solid #E8EAED;
+			font-family: monospace;
 		}
 	</style>
 
@@ -43,6 +52,55 @@
 					<!-- Ghost Server cards are filled in by JS here -->
 				</div>
 				<h5 id="no-containers-text" class="center-align">No Ghost Servers!</h5>
+
+				<div id="container-loading-spinner" class="center-align" style="display: none;">
+					<div class="preloader-wrapper small active">
+						<div class="spinner-layer spinner-blue">
+							<div class="circle-clipper left">
+								<div class="circle"></div>
+							</div>
+							<div class="gap-patch">
+								<div class="circle"></div>
+							</div>
+							<div class="circle-clipper right">
+								<div class="circle"></div>
+							</div>
+						</div>
+						<div class="spinner-layer spinner-red">
+							<div class="circle-clipper left">
+								<div class="circle"></div>
+							</div>
+							<div class="gap-patch">
+								<div class="circle"></div>
+							</div>
+							<div class="circle-clipper right">
+								<div class="circle"></div>
+							</div>
+						</div>
+						<div class="spinner-layer spinner-yellow">
+							<div class="circle-clipper left">
+								<div class="circle"></div>
+							</div>
+							<div class="gap-patch">
+								<div class="circle"></div>
+							</div>
+							<div class="circle-clipper right">
+								<div class="circle"></div>
+							</div>
+						</div>
+						<div class="spinner-layer spinner-green">
+							<div class="circle-clipper left">
+								<div class="circle"></div>
+							</div>
+							<div class="gap-patch">
+								<div class="circle"></div>
+							</div>
+							<div class="circle-clipper right">
+								<div class="circle"></div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 
 			<div id="delete-container-modal" class="modal">

@@ -13,8 +13,7 @@ const cardTemplate = `
 		<h6>Connecting:</h6>
 		<p>To connect, paste the text below into your game's console and hit enter:</p>
 
-		<div class="row s12 valign-wrapper"
-			style="margin: 10px 0 0 0; padding: 10px; background-color: #F8F9FA; border-radius: 10px; border: 1px solid #E8EAED;">
+		<div id="code" class="row s12 valign-wrapper">
 			<span id="connect-command-field">${connectCommandTemplate}</span>
 			<button id="copy-connect-cmd" class="btn-flat waves-effect" style="padding: 0 8px 0 8px; margin-left: 15px"><i
 					id="copy-connect-cmd-icon" class="material-icons" data-wsport="{ws_port}">content_copy</i></button>
@@ -28,7 +27,7 @@ const cardTemplate = `
 `;
 
 $(document).ready(async () => {
-	M.Modal.init($('.modal'), { onCloseEnd: onModalCloseEnd });
+	M.Modal.init($('.modal'));
 	const user = await getUser();
 	if (user === undefined) {
 		window.location.href = "./login.html";
@@ -38,18 +37,17 @@ $(document).ready(async () => {
 	listContainers();
 });
 
-$('#logout-btn').click((event) => {
-	event.preventDefault();
+$('#logout-btn').click(() => {
 	document.cookie = "authToken=";
-
 	window.location.href = "./login.html";
 });
 
-$('#refresh-containers-btn').click(() => {
-	listContainers();
-});
+$('#refresh-containers-btn').click(listContainers);
 
 async function listContainers() {
+	$('#container-loading-spinner').show();
+	$('#no-containers-text').hide();
+
 	const containers = await (await fetchAuthenticated(`/api/list`, "GET")).json();
 
 	$('#cards').empty();
@@ -67,6 +65,7 @@ async function listContainers() {
 
 	$('#delete-btn').click(deleteBtnListener);
 	$('#copy-connect-cmd').click(copyConnectCmdBtnListener);
+	$('#container-loading-spinner').hide();
 }
 
 function getCardHtml(id, name, wsPort) {
@@ -104,13 +103,9 @@ $('#delete-container-modal-confirm-btn').click(async () => {
 	}
 
 	M.toast({ html: `Ghost Server '${nameToDelete}' deleted!` });
+	idToDelete = undefined;
+	nameToDelete = undefined;
+
 	await listContainers();
 	$('#delete-container-modal-body').text(deleteContainerModalBodyDefaultText);
 });
-
-function onModalCloseEnd(closedModal) {
-	if (closedModal.id === "delete-container-modal") {
-		idToDelete = undefined;
-		nameToDelete = undefined;
-	}
-}

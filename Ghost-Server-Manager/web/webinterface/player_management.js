@@ -1,5 +1,4 @@
-import { getUser } from "../util/authHelper.js";
-import { validateContainerId, sendToContainer, getContainerId, containerId } from "./util.js";
+import { sendToContainer, containerId, authenticate } from "./util.js";
 
 let actionModalAcceptedAction = undefined;
 
@@ -19,42 +18,18 @@ const playerTableRowTemplate = `
 `;
 
 $(document).ready(async () => {
-	const user = await getUser();
-	if (!user) {
-		window.location.href = `../login.html?target=${encodeURIComponent(window.location.href)}`;
-		return;
-	}
+	const container = await authenticate();
+	if (container === undefined) return;
 
-	if (getContainerId() === undefined) {
-		$('#loading').hide();
-		$('#failure').show();
-		$('#failure-text').text("No container id found. (Query parameter 'id' missing)");
-		window.location.href = "../index.html";
-		return;
-	}
-
-	const valid = await validateContainerId();
-	if (!valid) {
-		$('#loading').hide();
-		$('#failure').show();
-		window.location.href = "../index.html";
-		return;
-	}
-
-	M.Tabs.init($('.tabs'));
 	M.Modal.init($('.modal'), { onCloseEnd: onModalCloseEnd });
 	M.Dropdown.init($('.dropdown-trigger'));
-	M.Sidenav.init($('.sidenav'));
-	$('#no-players-connected-text').hide();
 
 	await refreshConnectedPlayers();
 
 	$('#loading').hide();
-	$('#nav').show();
-	$('#slide-out').show();
 	$('#main-content').show();
 
-	setTimeout(refreshConnectedPlayers, 2000);
+	setInterval(refreshConnectedPlayers, 2000);
 });
 
 // Ban player by id / name

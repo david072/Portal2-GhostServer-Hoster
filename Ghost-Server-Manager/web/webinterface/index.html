@@ -6,25 +6,38 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	<!--Import Google Icon Font-->
-	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-	<link rel="stylesheet" href="./style.css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 
 	<title>Webinterface - General</title>
 </head>
 
 <body>
-	<nav id="nav" class="nav-title" style="display: none;">
-		<a class="brand-logo center">Ghost Server</a>
-	</nav>
+	<style>
+		#main-content {
+			padding-left: 300px;
+		}
 
-	<ul id="slide-out" class="sidenav sidenav-fixed" style="display: none;">
-		<li><a href="javascript:void(0)" class="active red lighten-2 white-text">General</a></li>
-		<li><a id="slide-out-player-management-btn" href="javascript:void(0)">Player Management</a></li>
-	</ul>
+		#code {
+			margin: 10px 0 0 0;
+			padding: 10px;
+			background-color: #F8F9FA;
+			border-radius: 10px;
+			border: 1px solid #E8EAED;
+			font-family: monospace;
+		}
+	</style>
 
 	<div id="main-content" style="display: none;">
+		<nav id="nav" class="nav-title">
+			<a href="../index.html" class="brand-logo center">Ghost Server</a>
+		</nav>
+
+		<ul id="slide-out" class="sidenav sidenav-fixed">
+			<li><a href="javascript:void(0)" class="active red lighten-2 white-text">General</a></li>
+			<li><a id="slide-out-player-management-btn" href="javascript:void(0)">Player Management</a></li>
+		</ul>
+
 		<div class="col s12 container" style="margin-top: 2rem;">
 			<div class="section">
 				<div class="row s12">
@@ -37,8 +50,8 @@
 					<div id="stop-server-modal" class="modal">
 						<div class="modal-content">
 							<h4>Stop server</h4>
-							<p>Do you really want to stop this server? Stopping the ghost server will delete the entire
-								server, which cannot be reverted!</p>
+							<p>Do you really want to stop this server? Stopping the ghost server will delete the
+								entire server, which cannot be reverted!</p>
 						</div>
 						<div class="modal-footer">
 							<button class="modal-close waves-effect waves-green btn-flat">Cancel</button>
@@ -54,21 +67,19 @@
 					<div class="divider"></div>
 					<p>To connect, paste the text below into your game's console and hit enter:</p>
 
-					<div class="row s12 valign-wrapper"
-						style="margin: 10px 0 0 0; padding: 10px; background-color: #F8F9FA; border-radius: 10px; border: 1px solid #E8EAED;">
+					<div id="code" class="row s12 valign-wrapper">
 						<span id="connect-command-field"></span>
 						<button id="copy-connect-cmd" class="btn-flat waves-effect"
-							style="padding: 0 8px 0 8px; margin-left: 15px"><i id="copy-connect-cmd-icon" class="material-icons"
-								data-wsport="{ws_port}">content_copy</i></button>
+							style="padding: 0 8px 0 8px; margin-left: 15px"><i id="copy-connect-cmd-icon"
+								class="material-icons" data-wsport="{ws_port}">content_copy</i></button>
 					</div>
 				</div>
 				<div class="section"></div>
 
-				<div class="col">
-					<h5>Settings</h5>
-				</div>
+				<h5>Settings</h5>
 				<div class="divider"></div>
 				<div class="section"></div>
+
 				<div class="col s12">
 					<div class="row">
 						<div class="col s3 input-field">
@@ -96,7 +107,10 @@
 		<center>
 			<div id="loading">
 				<div class="section"></div>
-				<div class="preloader-wrapper medium active">
+				<h3>Loading...</h3>
+				<div class="section"></div>
+
+				<div class="preloader-wrapper small active">
 					<div class="spinner-layer spinner-blue">
 						<div class="circle-clipper left">
 							<div class="circle"></div>
@@ -159,8 +173,8 @@
 		</center>
 	</main>
 
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="./index.js" type="module"></script>
 </body>
 

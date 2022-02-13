@@ -6,118 +6,125 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	<!--Import Google Icon Font-->
-	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-	<link rel="stylesheet" href="./style.css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 
 	<title>Webinterface - Player management</title>
 </head>
 
 <body>
-	<nav id="nav" class="nav-title">
-		<a class="brand-logo center">Ghost Server</a>
-	</nav>
+	<style>
+		#main-content {
+			padding-left: 300px;
+		}
+	</style>
 
-	<ul id="slide-out" class="sidenav sidenav-fixed">
-		<li><a id="slide-out-index-btn" href="javascript:void(0)">General</a></li>
-		<li><a href="javascript:void(0)" class="active red white-text lighten-2">Player Management</a></li>
-	</ul>
+	<div id="main-content" style="display: none;">
+		<nav id="nav" class="nav-title">
+			<a href="../index.html" class="brand-logo center">Ghost Server</a>
+		</nav>
 
-	<div id="main-content" class="col s12 container" style="margin-top: 2rem;">
-		<div class="section">
-			<!-- Section above header -->
-			<div class="row">
-				<!-- Disconnect player by name or id dropdown -->
-				<div class="col">
-					<a class="dropdown-trigger btn" data-target="disconnect-player-dropdown"><i
-							class="material-icons left">logout</i>Disconnect Player</a>
-					<ul id='disconnect-player-dropdown' class='dropdown-content'>
-						<li><a id="disconnect-player-by-id-button">By ID</a></li>
-						<li><a id="disconnect-player-by-name-button">By Name</a>
-						</li>
-					</ul>
-				</div>
+		<ul id="slide-out" class="sidenav sidenav-fixed">
+			<li><a id="slide-out-index-btn" href="javascript:void(0)">General</a></li>
+			<li><a href="javascript:void(0)" class="active red white-text lighten-2">Player Management</a></li>
+		</ul>
 
-				<!-- Ban player by name or id dropdown -->
-				<div class="col">
-					<a class="dropdown-trigger btn red" data-target="ban-player-dropdown"><i
-							class="material-icons left">cancel</i>Ban Player</a>
-					<ul id='ban-player-dropdown' class='dropdown-content'>
-						<li><a id="ban-player-by-id-button">By ID</a></li>
-						<li><a id="ban-player-by-name-button">By Name</a>
-						</li>
-					</ul>
-				</div>
-			</div>
-
-			<!-- Header with text and refresh button -->
-			<div class="col">
+		<div class="col s12 container" style="margin-top: 2rem;">
+			<div class="section">
+				<!-- Section above header -->
 				<div class="row">
-					<h5 class="col">Connected Players</h5>
-					<div class="col right pin-bottom">
-						<button id="refresh-connected-players-button" class="btn-flat waves-effect btn-floating"><i
-								class="material-icons black-text">refresh</i></button>
+					<!-- Disconnect player by name or id dropdown -->
+					<div class="col">
+						<a class="dropdown-trigger btn" data-target="disconnect-player-dropdown"><i
+								class="material-icons left">logout</i>Disconnect Player</a>
+						<ul id='disconnect-player-dropdown' class='dropdown-content'>
+							<li><a id="disconnect-player-by-id-button">By ID</a></li>
+							<li><a id="disconnect-player-by-name-button">By Name</a>
+							</li>
+						</ul>
+					</div>
+
+					<!-- Ban player by name or id dropdown -->
+					<div class="col">
+						<a class="dropdown-trigger btn red" data-target="ban-player-dropdown"><i
+								class="material-icons left">cancel</i>Ban Player</a>
+						<ul id='ban-player-dropdown' class='dropdown-content'>
+							<li><a id="ban-player-by-id-button">By ID</a></li>
+							<li><a id="ban-player-by-name-button">By Name</a>
+							</li>
+						</ul>
 					</div>
 				</div>
-				<div class="divider"></div>
-			</div>
 
-			<!-- List of connected players -->
-			<table id="connected-players-table" class="striped responsive-table">
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>ID</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
+				<!-- Header with text and refresh button -->
+				<div class="col">
+					<div class="row">
+						<h5 class="col">Connected Players</h5>
+						<div class="col right pin-bottom">
+							<button id="refresh-connected-players-button" class="btn-flat waves-effect btn-floating"><i
+									class="material-icons black-text">refresh</i></button>
+						</div>
+					</div>
+					<div class="divider"></div>
+				</div>
 
-			<h5 id="no-players-connected-text" class="center-align">No players connected!</h5>
+				<!-- List of connected players -->
+				<table id="connected-players-table" class="striped responsive-table">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>ID</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
 
-			<!-- Action by id modal -->
-			<div id="action-by-id" class="modal">
-				<form id="action-by-id-form">
+				<h5 id="no-players-connected-text" class="center-align">No players connected!</h5>
+
+				<!-- Action by id modal -->
+				<div id="action-by-id" class="modal">
+					<form id="action-by-id-form">
+						<div class="modal-content">
+							<h4 id="action-by-id-title"></h4>
+							<input required placeholder="Player ID" id="action-by-id-player-id" type="text"
+								class="validate">
+						</div>
+						<div class="modal-footer">
+							<button class="modal-close waves-effect waves-green btn-flat">Cancel</button>
+							<button id="action-by-id-accept-button" class="waves-effect waves-green btn-flat"></button>
+						</div>
+					</form>
+				</div>
+
+				<!-- Action by name modal -->
+				<div id="action-by-name" class="modal">
+					<form id="action-by-name-form">
+						<div class="modal-content">
+							<h4 id="action-by-name-title"></h4>
+							<input required placeholder="Player Name" id="action-by-name-player-name" type="text">
+						</div>
+						<div class="modal-footer">
+							<button class="modal-close waves-effect waves-green btn-flat">Cancel</button>
+							<button id="action-by-name-accept-button"
+								class="waves-effect waves-green btn-flat"></button>
+						</div>
+					</form>
+				</div>
+
+				<!-- Modal for confirmation of player actions from inside the table (banning, disconnecting) -->
+				<div id="player-action-confirmation-modal" class="modal">
 					<div class="modal-content">
-						<h4 id="action-by-id-title"></h4>
-						<input required placeholder="Player ID" id="action-by-id-player-id" type="text"
-							class="validate">
+						<h4 id="player-action-confirmation-modal-title"></h4>
+						<p id="player-action-confirmation-modal-body">Do you really want to disconnect the player
+							'{playerName}'?</p>
 					</div>
 					<div class="modal-footer">
 						<button class="modal-close waves-effect waves-green btn-flat">Cancel</button>
-						<button id="action-by-id-accept-button" class="waves-effect waves-green btn-flat"></button>
+						<button id="player-action-confirmation-modal-accept-button"
+							class="waves-effect waves-green btn-flat"></button>
 					</div>
-				</form>
-			</div>
-
-			<!-- Action by name modal -->
-			<div id="action-by-name" class="modal">
-				<form id="action-by-name-form">
-					<div class="modal-content">
-						<h4 id="action-by-name-title"></h4>
-						<input required placeholder="Player Name" id="action-by-name-player-name" type="text">
-					</div>
-					<div class="modal-footer">
-						<button class="modal-close waves-effect waves-green btn-flat">Cancel</button>
-						<button id="action-by-name-accept-button" class="waves-effect waves-green btn-flat"></button>
-					</div>
-				</form>
-			</div>
-
-			<!-- Modal for confirmation of player actions from inside the table (banning, disconnecting) -->
-			<div id="player-action-confirmation-modal" class="modal">
-				<div class="modal-content">
-					<h4 id="player-action-confirmation-modal-title"></h4>
-					<p id="player-action-confirmation-modal-body">Do you really want to disconnect the player
-						'{playerName}'?</p>
-				</div>
-				<div class="modal-footer">
-					<button class="modal-close waves-effect waves-green btn-flat">Cancel</button>
-					<button id="player-action-confirmation-modal-accept-button"
-						class="waves-effect waves-green btn-flat"></button>
 				</div>
 			</div>
 		</div>
@@ -127,6 +134,9 @@
 		<center>
 			<div id="loading">
 				<div class="section"></div>
+				<h3>Loading...</h3>
+				<div class="section"></div>
+
 				<div class="preloader-wrapper medium active">
 					<div class="spinner-layer spinner-blue">
 						<div class="circle-clipper left">
@@ -190,8 +200,8 @@
 		</center>
 	</main>
 
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="./player_management.js" type="module"></script>
 </body>
 
