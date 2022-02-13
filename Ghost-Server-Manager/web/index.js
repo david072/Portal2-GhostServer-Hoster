@@ -56,7 +56,7 @@ async function listContainers() {
 	let index = 1;
 	containers.forEach(container => {
 		const name = container.name ? container.name : `Ghost Server ${index}`;
-		const html = getCardHtml(container.id, name, container.port, container.wsPort);
+		const html = getCardHtml(container.id, name, container.wsPort);
 
 		$('#cards').append(html);
 		index++;

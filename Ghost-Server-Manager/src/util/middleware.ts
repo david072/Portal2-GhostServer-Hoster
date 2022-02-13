@@ -1,7 +1,7 @@
 import { logger } from "./logger";
 import { Request, Response, NextFunction } from "express";
 import { openDatabase as authOpenDatabase, getUser } from "../auth/account_manager";
-import { openDatabase as containerOpenDatabase, getContainerById, updateDatabase } from "../api/container_db_manager";
+import { openDatabase as containerOpenDatabase, getContainer, updateDatabase } from "../api/container_db_manager";
 import Docker from "dockerode";
 
 const docker = new Docker();
@@ -42,7 +42,7 @@ export async function containerAuthMiddleware(req: Request, res: Response, next:
 		return;
 	}
 
-	const container = await getContainerById(+req.query.id!);
+	const container = await getContainer(+req.query.id!);
 	if (!container) {
 		logger.info({ label: "containerAuthMiddleware", message: "Validation failed! Container does not exist" });
 		res.status(404).send();
