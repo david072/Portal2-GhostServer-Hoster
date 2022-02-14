@@ -3,8 +3,7 @@ export async function getUser() {
 	if (res === undefined) return undefined;
 	if (res.status !== 200) return undefined;
 
-	const json = await res.json();
-	return JSON.parse(json);
+	return await res.json();
 };
 
 export async function fetchAuthenticated(url, method, redirect = true) {
