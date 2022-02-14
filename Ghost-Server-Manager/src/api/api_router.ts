@@ -114,7 +114,7 @@ router.get("/delete", containerAuthMiddleware, async (req, res) => {
 
 router.get("/validateContainerId", containerAuthMiddleware, (req, res) => {
 	// The middleware validates here, so if we get to this point, it was successful
-	res.status(200).send(req.query.container);
+	res.status(200).json(req.body.container);
 });
 
 router.use(closeDatabase);

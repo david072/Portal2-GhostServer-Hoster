@@ -1,4 +1,4 @@
-import { fetchAuthenticated } from "../util/authHelper.js";
+import { fetchAuthenticated, getUser } from "../util/authHelper.js";
 
 export let containerId = undefined;
 

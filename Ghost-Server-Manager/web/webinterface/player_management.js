@@ -5,6 +5,7 @@ let actionModalAcceptedAction = undefined;
 const playerTableRowTemplate = `
 <td>{playerName}</td>
 <td>{playerId}</td>
+<td>{connectionType}</td>
 <td>
 	<div class="center">
 		<button id="disconnect-player-btn" class="btn waves-effect waves-light" data-playerid={playerId} data-playername={playerName}>
@@ -29,7 +30,7 @@ $(document).ready(async () => {
 	$('#loading').hide();
 	$('#main-content').show();
 
-	setInterval(refreshConnectedPlayers, 2000);
+	setInterval(refreshConnectedPlayers, 6000);
 });
 
 // Ban player by id / name
@@ -137,14 +138,15 @@ $('#refresh-connected-players-button').click((event) => {
 });
 
 async function refreshConnectedPlayers() {
-	$('#connected-players-table tbody').empty();
-
 	const players = await sendToContainer("/listPlayers", "GET");
 	const html = (await players.json()).map((player) => {
 		return playerTableRowTemplate
 			.replaceAll("{playerName}", player.name)
-			.replaceAll("{playerId}", player.id);
+			.replaceAll("{playerId}", player.id)
+			.replace("{connectionType}", player.isSpectator ? "Spectator" : "Player");
 	}).join('');
+
+	$('#connected-players-table tbody').empty();
 
 	if (html.length === 0) {
 		$('#connected-players-table').hide();

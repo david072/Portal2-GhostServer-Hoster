@@ -4,6 +4,7 @@ const addon = require(path.join(__dirname, "..", "addon"));
 export class Client {
     id: number;
     name: string;
+    isSpectator: boolean;
 }
 
 export const list: () => Client[] = addon.list;
