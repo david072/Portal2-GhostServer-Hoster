@@ -212,6 +212,28 @@ NODE_FUNC(getAcceptingPlayers)
     return v8::Boolean::New(isolate, g_network.acceptingPlayers);
 }
 
+NODE_FUNC(setAcceptingSpectators)
+{
+    bool newValue = true;
+    if (args.Length() == 1)
+    {
+        auto _newValue = args[0];
+        if (_newValue->IsBoolean())
+            newValue = _newValue->BooleanValue(isolate);
+    }
+
+    // fuck vscode for that formatting
+    g_network.ScheduleServerThread([=]()
+                                   { g_network.acceptingSpectators = newValue; });
+
+    return v8::Undefined(isolate);
+}
+
+NODE_FUNC(getAcceptingSpectators)
+{
+    return v8::Boolean::New(isolate, g_network.acceptingSpectators);
+}
+
 void Initialize(v8::Local<v8::Object> exports)
 {
     NODE_SET_METHOD(exports, "list", list);
@@ -230,6 +252,9 @@ void Initialize(v8::Local<v8::Object> exports)
 
     NODE_SET_METHOD(exports, "setAcceptingPlayers", setAcceptingPlayers);
     NODE_SET_METHOD(exports, "getAcceptingPlayers", getAcceptingPlayers);
+
+    NODE_SET_METHOD(exports, "setAcceptingSpectators", setAcceptingSpectators);
+    NODE_SET_METHOD(exports, "getAcceptingSpectators", getAcceptingSpectators);
 }
 
 NODE_MODULE(p2_ghost_server, Initialize)

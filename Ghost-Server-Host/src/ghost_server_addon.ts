@@ -23,3 +23,6 @@ export const banId: (id: number) => undefined = addon.banId;
 
 export const setAcceptingPlayers: (value: boolean | undefined) => undefined = addon.setAcceptingPlayers;
 export const getAcceptingPlayers: () => boolean = addon.getAcceptingPlayers;
+
+export const setAcceptingSpectators: (value: boolean | undefined) => undefined = addon.setAcceptingSpectators;
+export const getAcceptingSpectators: () => boolean = addon.getAcceptingSpectators;

@@ -39,8 +39,12 @@ async function init() {
 
 	promises.push(refreshConnectedPlayers());
 	promises.push(sendToContainer("/acceptingPlayers", "GET").then(async (response) => {
-		const json = await response.json();
-		$('#accept-players-switch').prop("checked", json === 1);
+		const isOn = await response.json();
+		$('#accept-players-switch').prop("checked", isOn);
+	}));
+	promises.push(sendToContainer("/acceptingSpectators", "GET").then(async (response) => {
+		const isOn = await response.json();
+		$('#accept-spectators-switch').prop("checked", isOn);
 	}));
 
 	await Promise.all(promises);
@@ -182,6 +186,12 @@ $('#accept-players-switch').change(async () => {
 	const value = $('#accept-players-switch').is(":checked") ? "1" : "0";
 	await sendToContainer(`/acceptingPlayers?value=${value}`, "PUT");
 	M.toast({ html: "Accepting players updated!" });
+});
+
+$('#accept-spectators-switch').change(async () => {
+	const value = $('#accept-spectators-switch').is(":checked") ? "1" : "0";
+	await sendToContainer(`/acceptingSpectators?value=${value}`, "PUT");
+	M.toast({ html: "Accepting spectators updated!" });
 });
 
 

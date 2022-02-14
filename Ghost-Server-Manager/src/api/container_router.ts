@@ -115,6 +115,19 @@ router.get("/acceptingPlayers", async (req, res) => {
 	res.status(200).json(response.data);
 });
 
+router.put("/acceptingSpectators", async (req, res) => {
+	let value: string | undefined = undefined;
+	if ("value" in req.query) value = req.query.value.toString();
+
+	await sendToContainer(req, `/acceptingSpectators?value=${value}`, "PUT");
+	res.status(200).send();
+});
+
+router.get("/acceptingSpectators", async (req, res) => {
+	const response = await sendToContainer(req, "/acceptingSpectators", "GET");
+	res.status(200).json(response.data);
+});
+
 function sendToContainer(req: Request, route: string, method: Method) {
 	return axios({
 		url: `http://localhost:${req.body.container.port}${route}`,

@@ -95,5 +95,17 @@ app.get("/acceptingPlayers", (_, res) => {
 	res.status(200).json(ghostServer.getAcceptingPlayers());
 });
 
+app.put("/acceptingSpectators", (req, res) => {
+	let value: boolean | undefined = undefined;
+	if ("value" in req.query) value = req.query.value === "1";
+
+	ghostServer.setAcceptingSpectators(value);
+	res.status(200).send(`acceptingPlayers set to ${value || true}`);
+});
+
+app.get("/acceptingSpectators", (_, res) => {
+	res.status(200).json(ghostServer.getAcceptingSpectators());
+});
+
 const port = process.env.PORT || 80;
 app.listen(+port, () => { console.log(`Server listening on port ${port}`); });
