@@ -190,6 +190,28 @@ NODE_FUNC(banId)
     return v8::Undefined(isolate);
 }
 
+NODE_FUNC(setAcceptingPlayers)
+{
+    bool newValue = true;
+    if (args.Length() == 1)
+    {
+        auto _newValue = args[0];
+        if (_newValue->IsBoolean())
+            newValue = _newValue->BooleanValue(isolate);
+    }
+
+    // fuck vscode for that formatting
+    g_network.ScheduleServerThread([=]()
+                                   { g_network.acceptingPlayers = newValue; });
+
+    return v8::Undefined(isolate);
+}
+
+NODE_FUNC(getAcceptingPlayers)
+{
+    return v8::Boolean::New(isolate, g_network.acceptingPlayers);
+}
+
 void Initialize(v8::Local<v8::Object> exports)
 {
     NODE_SET_METHOD(exports, "list", list);
@@ -205,6 +227,9 @@ void Initialize(v8::Local<v8::Object> exports)
 
     NODE_SET_METHOD(exports, "ban", ban);
     NODE_SET_METHOD(exports, "banId", banId);
+
+    NODE_SET_METHOD(exports, "setAcceptingPlayers", setAcceptingPlayers);
+    NODE_SET_METHOD(exports, "getAcceptingPlayers", getAcceptingPlayers);
 }
 
 NODE_MODULE(p2_ghost_server, Initialize)

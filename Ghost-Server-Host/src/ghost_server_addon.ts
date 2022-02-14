@@ -20,3 +20,6 @@ export const disconnectId: (id: number) => undefined = addon.disconnectId;
 
 export const ban: (name: string) => undefined = addon.ban;
 export const banId: (id: number) => undefined = addon.banId;
+
+export const setAcceptingPlayers: (value: boolean | undefined) => undefined = addon.setAcceptingPlayers;
+export const getAcceptingPlayers: () => boolean = addon.getAcceptingPlayers;

@@ -83,5 +83,17 @@ app.put("/banPlayer", (req, res) => {
 	res.status(400).send("Please specify either 'id' or 'name'");
 });
 
+app.put("/acceptingPlayers", (req, res) => {
+	let value: boolean | undefined = undefined;
+	if ("value" in req.query) value = req.query.value === "1";
+
+	ghostServer.setAcceptingPlayers(value);
+	res.status(200).send(`acceptingPlayers set to ${value || true}`);
+});
+
+app.get("/acceptingPlayers", (_, res) => {
+	res.status(200).json(ghostServer.getAcceptingPlayers());
+});
+
 const port = process.env.PORT || 80;
 app.listen(+port, () => { console.log(`Server listening on port ${port}`); });

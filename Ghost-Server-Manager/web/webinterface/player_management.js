@@ -25,13 +25,26 @@ $(document).ready(async () => {
 	M.Modal.init($('.modal'), { onCloseEnd: onModalCloseEnd });
 	M.Dropdown.init($('.dropdown-trigger'));
 
-	await refreshConnectedPlayers();
+	await init();
 
 	$('#loading').hide();
 	$('#main-content').show();
 
 	setInterval(refreshConnectedPlayers, 6000);
 });
+
+async function init() {
+	// Run promises in parallel
+	const promises = [];
+
+	promises.push(refreshConnectedPlayers());
+	promises.push(sendToContainer("/acceptingPlayers", "GET").then(async (response) => {
+		const json = await response.json();
+		$('#accept-players-switch').prop("checked", json === 1);
+	}));
+
+	await Promise.all(promises);
+}
 
 // Ban player by id / name
 $('#ban-player-by-id-button').click((event) => {
@@ -163,6 +176,12 @@ async function refreshConnectedPlayers() {
 
 $('#slide-out-index-btn').click(() => {
 	window.location.href = `./index.html?id=${containerId}`;
+});
+
+$('#accept-players-switch').change(async () => {
+	const value = $('#accept-players-switch').is(":checked") ? "1" : "0";
+	await sendToContainer(`/acceptingPlayers?value=${value}`, "PUT");
+	M.toast({ html: "Accepting players updated!" });
 });
 
 

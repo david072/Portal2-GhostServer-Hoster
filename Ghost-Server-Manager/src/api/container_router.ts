@@ -102,6 +102,19 @@ router.put("/disconnectPlayer", async (req, res) => {
 	res.status(200).send();
 });
 
+router.put("/acceptingPlayers", async (req, res) => {
+	let value: string | undefined = undefined;
+	if ("value" in req.query) value = req.query.value.toString();
+
+	await sendToContainer(req, `/acceptingPlayers?value=${value}`, "PUT");
+	res.status(200).send();
+});
+
+router.get("/acceptingPlayers", async (req, res) => {
+	const response = await sendToContainer(req, "/acceptingPlayers", "GET");
+	res.status(200).json(response.data);
+});
+
 function sendToContainer(req: Request, route: string, method: Method) {
 	return axios({
 		url: `http://localhost:${req.body.container.port}${route}`,
