@@ -13,6 +13,7 @@ export const startServer: (port: number) => string = addon.startServer;
 export const exit: () => string = addon.exit;
 
 export const startCountdown: (preCommands: string, postCommands: string, duration: number) => undefined = addon.startCountdown;
+export const serverMessage: (message: string) => undefined = addon.serverMessage;
 
 export const disconnect: (name: string) => undefined = addon.disconnect;
 export const disconnectId: (id: number) => undefined = addon.disconnectId;

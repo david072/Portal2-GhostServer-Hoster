@@ -30,6 +30,16 @@ router.put("/startCountdown", async (req, res) => {
 	res.status(200).send();
 });
 
+router.put("/serverMessage", async (req, res) => {
+	if (!("message" in req.query)) {
+		res.status(400).send();
+		return;
+	}
+
+	await sendToContainer(req, `/serverMessage?message=${req.query.message.toString()}`, "PUT");
+	res.status(200).send();
+});
+
 router.put("/banPlayer", async (req, res) => {
 	logger.info({ source: "Container: banPlayer", message: "Route called" });
 

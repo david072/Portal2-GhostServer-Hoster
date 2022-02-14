@@ -39,6 +39,16 @@ app.put("/startCountdown", (_, res) => {
 	res.status(200).send("Countdown started");
 });
 
+app.put("/serverMessage", (req, res) => {
+	if (!("message" in req.query)) {
+		res.status(400).send("Please specify a message");
+		return;
+	}
+
+	ghostServer.serverMessage(req.query.message.toString());
+	res.status(200).send();
+});
+
 app.get("/listPlayers", (_, res) => {
 	res.json(ghostServer.list());
 });

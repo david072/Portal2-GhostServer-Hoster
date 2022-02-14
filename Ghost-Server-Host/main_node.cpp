@@ -19,6 +19,12 @@ static NetworkManager g_network;
 
 #define nodeStringLiteral(str) v8::String::NewFromUtf8(isolate, str).ToLocalChecked()
 
+std::string toCppString(v8::Isolate *isolate, v8::MaybeLocal<v8::String> str)
+{
+    v8::String::Utf8Value utf8Value(isolate, str.ToLocalChecked());
+    return std::string(*utf8Value);
+}
+
 NODE_FUNC(startServer)
 {
     int port = 53000;
@@ -77,15 +83,27 @@ NODE_FUNC(startCountdown)
     if (!_duration->IsNumber())
         return v8::Undefined(isolate);
 
-    v8::String::Utf8Value utf8PreCommands(isolate, _preCommands->ToString(context).ToLocalChecked());
-    v8::String::Utf8Value utf8PostCommands(isolate, _postCommands->ToString(context).ToLocalChecked());
-    std::string preCommands(*utf8PreCommands);
-    std::string postCommands(*utf8PostCommands);
-
+    auto preCommands = toCppString(isolate, _preCommands->ToString(context));
+    auto postCommands = toCppString(isolate, _postCommands->ToString(context));
     auto duration = _duration->NumberValue(context).ToChecked();
 
     g_network.ScheduleServerThread([=]
                                    { g_network.StartCountdown(preCommands, postCommands, duration); });
+
+    return v8::Undefined(isolate);
+}
+
+NODE_FUNC(serverMessage)
+{
+    if (args.Length() != 1)
+        return v8::Exception::TypeError(nodeStringLiteral("One argument required"));
+
+    auto _message = args[0];
+    if (!_message->IsString())
+        return v8::Exception::TypeError(nodeStringLiteral("First argument must be a string"));
+
+    auto message = toCppString(isolate, _message->ToString(context));
+    g_network.ServerMessage(message.c_str());
 
     return v8::Undefined(isolate);
 }
@@ -180,6 +198,7 @@ void Initialize(v8::Local<v8::Object> exports)
     NODE_SET_METHOD(exports, "exit", exit);
 
     NODE_SET_METHOD(exports, "startCountdown", startCountdown);
+    NODE_SET_METHOD(exports, "serverMessage", serverMessage);
 
     NODE_SET_METHOD(exports, "disconnect", disconnect);
     NODE_SET_METHOD(exports, "disconnectId", disconnectId);

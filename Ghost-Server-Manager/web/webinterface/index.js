@@ -77,3 +77,16 @@ $('#stop-server-modal-accept-button').click(async (event) => {
 $('#slide-out-player-management-btn').click(() => {
 	window.location.href = `./player_management.html?id=${containerId}`;
 });
+
+$('#server-message-form').submit(async (event) => {
+	event.preventDefault();
+
+	const message = $('#server-message').val().trim();
+	const response = await sendToContainer(`/serverMessage?message=${message}`, "PUT");
+	if (response.status !== 200) {
+		M.toast({ html: "An error occured!" });
+		return;
+	}
+
+	M.toast({ html: "Successfully sent message!" });
+});
