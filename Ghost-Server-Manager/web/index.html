@@ -31,9 +31,29 @@
 	<nav class="nav-title">
 		<a class="brand-logo center">Ghost Servers</a>
 		<ul id="nav-mobile" class="right hide-on-med-and-down">
-			<li><a id="logout-btn" href="#">Logout</a></li>
+			<a class='dropdown-trigger btn-flat waves-effect' href='#' data-target='account-dropdown'>
+				<i class="material-icons white-text">account_circle</i>
+			</a>
+
+			<ul id='account-dropdown' class='dropdown-content'>
+				<li><a id="logout-btn" href="javascript:void(0)">Logout</a></li>
+				<li><a href="#delete-account-modal" class="modal-trigger red-text">Delete Account</a></li>
+			</ul>
 		</ul>
 	</nav>
+
+	<div id="delete-account-modal" class="modal">
+		<div class="modal-content">
+			<h4>Delete Account</h4>
+			<p id="delete-container-modal-body">Do you really want to delete your account? All of your currently
+				running Ghost Servers will be deleted. <b>This cannot be reverted!</b></p>
+		</div>
+		<div class="modal-footer">
+			<button class="modal-close waves-effect btn-flat">Cancel</button>
+			<button id="delete-account" class="modal-close waves-effect btn-flat red-text">Delete
+				Account</button>
+		</div>
+	</div>
 
 	<main>
 		<div class="container">

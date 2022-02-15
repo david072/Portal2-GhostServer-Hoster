@@ -1,7 +1,8 @@
 import express from "express";
 import { logger } from "../util/logger";
-import { createUser, generateAuthToken, openDatabase, closeDatabase } from "../auth/account_manager";
+import { createUser, generateAuthToken, openDatabase, closeDatabase, deleteUser } from "../auth/account_manager";
 import { authMiddleware } from "../util/middleware";
+import { deleteAllContainersFromUser } from "../api/api_router";
 
 export const router = express.Router();
 
@@ -68,6 +69,13 @@ router.post("/generateAuthToken", async (req, res) => {
 
 router.get("/user", authMiddleware, (req, res) => {
 	res.status(200).json(req.body.user);
+});
+
+router.delete("/delete", authMiddleware, async (req, res) => {
+	await deleteAllContainersFromUser(req.body.user.id);
+	await deleteUser(req.body.user.id);
+
+	res.status(200).send();
 });
 
 router.use(closeDatabase);

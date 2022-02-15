@@ -28,6 +28,8 @@ const cardTemplate = `
 
 $(document).ready(async () => {
 	M.Modal.init($('.modal'));
+	M.Dropdown.init($('.dropdown-trigger'));
+
 	const user = await getUser();
 	if (user === undefined) {
 		window.location.href = "./login.html";
@@ -37,7 +39,16 @@ $(document).ready(async () => {
 	listContainers();
 });
 
-$('#logout-btn').click(() => {
+$('#logout-btn').click((event) => {
+	event.preventDefault();
+	document.cookie = "authToken=";
+	window.location.href = "./login.html";
+});
+
+$('#delete-account').click(async () => {
+	M.toast({ html: "Deleting account..." });
+
+	await fetchAuthenticated("/auth/delete", "DELETE");
 	document.cookie = "authToken=";
 	window.location.href = "./login.html";
 });

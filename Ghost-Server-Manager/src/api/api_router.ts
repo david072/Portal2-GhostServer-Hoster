@@ -131,7 +131,7 @@ function randomRangeNotIn(min: number, max: number, numbers: number[]): number |
 	return number;
 }
 
-async function stopContainer(containerId: string, port: string) {
+async function stopContainer(containerId: string, port: number) {
 	await axios.get(`http://localhost:${port}/stopServer`);
 
 	const container = docker.getContainer(containerId);
@@ -142,4 +142,19 @@ async function stopContainer(containerId: string, port: string) {
 async function updateDb() {
 	const runningContainerIds = (await docker.listContainers()).map((container) => container.Id);
 	await updateDatabase(runningContainerIds);
+}
+
+export async function deleteAllContainersFromUser(userId: number) {
+	await updateDb();
+
+	const containers = await getContainersForUser(userId);
+
+	const promises: Promise<void>[] = [];
+	containers.forEach((container) => {
+		promises.push(stopContainer(container.containerId, container.port).then(() => {
+			deleteContainer(container.id);
+		}));
+	});
+
+	await Promise.all(promises);
 }

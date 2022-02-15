@@ -100,3 +100,8 @@ export async function getUser(authToken: string): Promise<User | undefined> {
 	if (!userRow) return;
 	return User.fromRow(userRow);
 }
+
+export async function deleteUser(id: number) {
+	await db.run("DELETE FROM auth_tokens WHERE user_id = ?", [id]);
+	await db.run("DELETE FROM users WHERE id = ?", [id]);
+}
