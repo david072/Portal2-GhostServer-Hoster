@@ -3,9 +3,15 @@ import { join } from "path";
 
 const myFormat = format.printf(({ level, message, label, timestamp, ...rest }) => {
 	let result = `${timestamp} `;
-	if (rest.source !== undefined) result += `\x1b[33m[${rest.source}]\x1b[0m `;
+	if (rest.source !== undefined) {
+		result += `\x1b[33m[${rest.source}]\x1b[0m `;
+		delete rest.source;
+	}
 
-	result += `${level}: ${message}`;
+	result += `${level}: ${message} `;
+
+	if (Object.keys(rest).length !== 0)
+		result += JSON.stringify(rest);
 
 	return result;
 });
