@@ -2,10 +2,10 @@ import express from "express";
 import { logger } from "../util/logger";
 import { createUser, generateAuthToken, openDatabase, closeDatabase, deleteUser, generatePasswordResetToken, validatePasswordResetCredentials, resetPassword } from "../auth/account_manager";
 import { authMiddleware } from "../util/middleware";
-import { deleteAllContainersFromUser } from "../api/api_router";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { sendMailHtml } from "../util/mailer";
+import { deleteAllContainersFromUser } from "../api/docker_helper";
 
 export const router = express.Router();
 
