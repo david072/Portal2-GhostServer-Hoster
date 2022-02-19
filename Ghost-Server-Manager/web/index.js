@@ -4,10 +4,11 @@ import { copyConnectCmdBtnListener } from "./util/clipboardHelper.js";
 
 const deleteContainerModalBodyDefaultText = "Do you really want to delete the Ghost Server '{name}'? This cannot be reverted!";
 
+const cardHighlightClasses = "grey lighten-4";
 const cardTemplate = `
-<div class="card">
+<div class="card {highlightClasses}">
     <div class="card-content">
-        <span class="card-title">{name}</span>
+		<span class="card-title">{name}</span>
 		<div class="divider"></div>
 
 		<h6>Connecting:</h6>
@@ -26,11 +27,13 @@ const cardTemplate = `
 </div>
 `;
 
+let user;
+
 $(document).ready(async () => {
 	M.Modal.init($('.modal'));
 	M.Dropdown.init($('.dropdown-trigger'));
 
-	const user = await getUser();
+	user = await getUser();
 	if (user === undefined) {
 		window.location.href = "./login.html";
 		return
@@ -70,7 +73,7 @@ async function listContainers() {
 	let index = 1;
 	containers.forEach(container => {
 		const name = container.name ? container.name : `Ghost Server ${index}`;
-		const html = getCardHtml(container.id, name, container.wsPort);
+		const html = getCardHtml(container.id, name, container.wsPort, container.userId === user.id);
 
 		$('#cards').append(html);
 		index++;
@@ -84,14 +87,17 @@ async function listContainers() {
 	$('#container-loading-spinner').hide();
 }
 
-function getCardHtml(id, name, wsPort) {
-	return cardTemplate
+function getCardHtml(id, name, wsPort, isOwn) {
+	let result = cardTemplate
 		.replace("{name}", name)
 		.replace("{data_name}", `\"${name}\"`)
 		// .replace("{port}", port)
 		.replaceAll("{ws_port}", wsPort)
 		.replace("{id}", id)
 		.replace("{webinterface_href}", `./webinterface/index.html?id=${id}`);
+
+	if (!isOwn) result = result.replace("{highlightClasses}", cardHighlightClasses);
+	return result;
 }
 
 let idToDelete = undefined;
