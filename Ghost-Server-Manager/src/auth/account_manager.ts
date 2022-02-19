@@ -12,14 +12,16 @@ var db: Database | undefined;
 export class User {
 	id: number;
 	email: string;
+	role: string;
 
-	constructor(id: number, email: string) {
+	constructor(id: number, email: string, role: string) {
 		this.id = id;
 		this.email = email;
+		this.role = role;
 	}
 
 	static fromRow(row: any): User {
-		return new User(row.id, row.email);
+		return new User(row.id, row.email, row.role);
 	}
 }
 
@@ -33,6 +35,11 @@ export async function openDatabase() {
         email TEXT NOT NULL, 
         passwordHash TEXT NOT NULL
     );`);
+
+	try {
+		await db.run(`ALTER TABLE users ADD role TEXT NOT NULL DEFAULT 'user'`);
+	}
+	catch { }
 
 	await db.run(`CREATE TABLE IF NOT EXISTS auth_tokens (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -92,12 +99,6 @@ export async function getUser(authToken: string): Promise<User | undefined> {
 
 	const authTokenRow = await db.get("SELECT * FROM auth_tokens WHERE token = ?", [authToken]);
 	if (!authTokenRow) return;
-
-	// Check if authToken has expired
-	// if (isAfter(Date.now(), new Date(authTokenRow.expirationDate))) {
-	//  	await db.get("DELETE FROM auth_tokens WHERE token = ?", [authToken]);
-	//  	return;
-	// }
 
 	const userRow = await db.get("SELECT * FROM users WHERE id = ?", [authTokenRow.user_id]);
 	if (!userRow) return;
