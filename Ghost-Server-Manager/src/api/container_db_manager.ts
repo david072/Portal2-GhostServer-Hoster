@@ -1,9 +1,9 @@
 import { join } from "path";
 import { Database as sqlite3Database } from "sqlite3";
 import { open, Database } from "sqlite";
-import { addHours } from "date-fns";
+import { addHours, formatDistance } from "date-fns";
 import { scheduleJob } from "node-schedule";
-import { stopContainer } from "./docker_helper";
+import { stopContainer, updateDb } from "./docker_helper";
 
 const dbPath = join(__dirname, "../../db/containers.db");
 
@@ -17,17 +17,22 @@ export class Container {
 	userId: number;
 	name?: string;
 
-	constructor(id: number, containerId: string, port: number, wsPort: number, userId: number, name?: string) {
+	// Used by the website
+	relativeRemainingDuration: string;
+
+	constructor(id: number, containerId: string, port: number, wsPort: number, userId: number, expirationDate: number, name?: string) {
 		this.id = id;
 		this.containerId = containerId;
 		this.port = port;
 		this.wsPort = wsPort;
 		this.userId = userId;
 		this.name = name;
+
+		this.relativeRemainingDuration = formatDistance(new Date(expirationDate), Date.now(), { addSuffix: true, includeSeconds: true });
 	}
 
 	static fromRow(row: any): Container {
-		return new Container(row.id, row.container_id, row.port, row.ws_port, row.user_id, row.name);
+		return new Container(row.id, row.container_id, row.port, row.ws_port, row.user_id, row.expirationDate, row.name);
 	}
 }
 
@@ -45,7 +50,18 @@ export async function openDatabase() {
     );`);
 
 	try {
-		await db.run(`ALTER TABLE containers ADD COLUMN expirationDate NUMBER NOT NULL DEFAULT ${addHours(Date.now(), 5).getTime()}`);
+		const expirationDate = addHours(Date.now(), 5);
+		await db.run(`ALTER TABLE containers ADD COLUMN expirationDate NUMBER NOT NULL DEFAULT ${expirationDate.getTime()}`);
+		
+		scheduleJob(expirationDate, async () => {
+			if (!db) openDatabase();
+			const rows = await db.all("SELECT * FROM containers WHERE expirationDate < ?", [Date.now()]);
+			let promises: Promise<void>[] = [];
+			rows.forEach((row) => { promises.push(stopContainer(row.port, false)); });
+
+			await Promise.all(promises);
+			updateDb();
+		});
 	}
 	catch { }
 }

@@ -8,7 +8,6 @@ import { createContainer, stopContainer, updateDb } from "./docker_helper";
 
 const MAX_NUMBER_OF_GHOST_SERVERS = 10;
 
-const docker = new Docker();
 export const router = express.Router();
 
 // Require authentication for all sub-routes => Valid account and owning the requested container

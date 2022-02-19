@@ -3,8 +3,6 @@ import { logger } from "../util/logger";
 import axios from "axios";
 import { deleteContainer, getContainersForUser, updateDatabase } from "./container_db_manager";
 
-const MAX_NUMBER_OF_GHOST_SERVERS = 10;
-
 const docker = new Docker();
 
 export async function createContainer(port: number, wsPort: number): Promise<string> {

@@ -8,7 +8,7 @@ const cardHighlightClasses = "grey lighten-4";
 const cardTemplate = `
 <div class="card {highlightClasses}">
     <div class="card-content">
-		<span class="card-title">{name}</span>
+		<span class="card-title">{name} - Expires {relativeExpiry}</span>
 		<div class="divider"></div>
 
 		<h6>Connecting:</h6>
@@ -73,7 +73,7 @@ async function listContainers() {
 	let index = 1;
 	containers.forEach(container => {
 		const name = container.name ? container.name : `Ghost Server ${index}`;
-		const html = getCardHtml(container.id, name, container.wsPort, container.userId === user.id);
+		const html = getCardHtml(container.id, name, container.wsPort, container.relativeRemainingDuration, container.userId === user.id);
 
 		$('#cards').append(html);
 		index++;
@@ -87,14 +87,15 @@ async function listContainers() {
 	$('#container-loading-spinner').hide();
 }
 
-function getCardHtml(id, name, wsPort, isOwn) {
+function getCardHtml(id, name, wsPort, relativeRemainingDuration, isOwn) {
 	let result = cardTemplate
 		.replace("{name}", name)
 		.replace("{data_name}", `\"${name}\"`)
 		// .replace("{port}", port)
 		.replaceAll("{ws_port}", wsPort)
 		.replace("{id}", id)
-		.replace("{webinterface_href}", `./webinterface/index.html?id=${id}`);
+		.replace("{webinterface_href}", `./webinterface/index.html?id=${id}`)
+		.replace("{relativeExpiry}", relativeRemainingDuration);
 
 	if (!isOwn) result = result.replace("{highlightClasses}", cardHighlightClasses);
 	return result;
