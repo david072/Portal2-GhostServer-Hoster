@@ -3,7 +3,7 @@ import { logger } from "../util/logger";
 import axios from "axios";
 import Docker from "dockerode";
 import { authMiddleware, containerAuthMiddleware } from "../util/middleware";
-import { closeDatabase, insertContainer, getAllColumnValues, updateDatabase, deleteContainer, getContainersForUser } from "./container_db_manager";
+import { closeDatabase, insertContainer, getAllColumnValues, updateDatabase, deleteContainer, getContainersForUser, getAllContainers } from "./container_db_manager";
 
 const MAX_NUMBER_OF_GHOST_SERVERS = 10;
 
@@ -96,6 +96,13 @@ function waitForContainerStart(container: Docker.Container): Promise<void> {
 
 router.get("/list", async (req, res) => {
 	await updateDb();
+
+	if (req.body.user.role === "admin" && "showAll" in req.query) {
+		if (req.query.showAll === "1") {
+			res.status(200).json(await getAllContainers());
+			return;
+		}
+	}
 
 	const containers = await getContainersForUser(req.body.user.id);
 	res.status(200).json(containers);

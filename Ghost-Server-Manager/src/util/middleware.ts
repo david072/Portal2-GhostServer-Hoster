@@ -48,7 +48,7 @@ export async function containerAuthMiddleware(req: Request, res: Response, next:
 		res.status(404).send();
 		return;
 	}
-	else if (container.userId !== req.body.user.id) {
+	else if (req.body.user.role !== "admin" && container.userId !== req.body.user.id) {
 		logger.info({ source: "containerAuthMiddleware", message: "Validation failed! User does not own the container" });
 		res.status(401).send();
 		return;

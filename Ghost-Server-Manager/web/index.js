@@ -36,6 +36,10 @@ $(document).ready(async () => {
 		return
 	}
 
+	if (user.role === "admin") {
+		$('#show-all-ghost-servers-switch-wrapper').show();
+	}
+
 	listContainers();
 });
 
@@ -59,7 +63,8 @@ async function listContainers() {
 	$('#container-loading-spinner').show();
 	$('#no-containers-text').hide();
 
-	const containers = await (await fetchAuthenticated(`/api/list`, "GET")).json();
+	const showAll = $('#show-all-ghost-servers-switch').is(":checked") ? "1" : "0";
+	const containers = await (await fetchAuthenticated(`/api/list?showAll=${showAll}`, "GET")).json();
 
 	$('#cards').empty();
 	let index = 1;
@@ -120,3 +125,5 @@ $('#delete-container-modal-confirm-btn').click(async () => {
 	await listContainers();
 	$('#delete-container-modal-body').text(deleteContainerModalBodyDefaultText);
 });
+
+$('#show-all-ghost-servers-switch').change(listContainers);

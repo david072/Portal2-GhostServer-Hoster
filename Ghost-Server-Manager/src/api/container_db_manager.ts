@@ -68,6 +68,11 @@ export async function getContainersForUser(userId: number) {
 	return rows.map((row) => Container.fromRow(row));
 }
 
+export async function getAllContainers(): Promise<Container[]> {
+	const rows = await db.all("SELECT * FROM containers");
+	return rows.map(row => Container.fromRow(row));
+}
+
 export async function getContainer(id: number): Promise<Container | undefined> {
 	const row = await db.get("SELECT * FROM containers WHERE id = ?", [id]);
 	if (!row) return;

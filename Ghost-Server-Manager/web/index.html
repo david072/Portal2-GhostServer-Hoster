@@ -62,8 +62,17 @@
 			<div class="row">
 				<a class="btn waves-effect" href="./create/create_server.html"><i class="material-icons left">add</i>New
 					Ghost Server</a>
-				<button id="refresh-containers-btn" class="right btn-flat waves-effect btn-floating"><i
-						class="material-icons black-text">refresh</i></button>
+				<div class="row valign-wrapper right">
+					<div id="show-all-ghost-servers-switch-wrapper" class="switch col" style="display: none;">
+						<label>
+							<input id="show-all-ghost-servers-switch" type="checkbox">
+							<span class="lever"></span>
+							Show all running Ghost Servers
+						</label>
+					</div>
+					<button id="refresh-containers-btn" class="btn-flat waves-effect btn-floating"><i
+							class="material-icons black-text">refresh</i></button>
+				</div>
 			</div>
 
 			<div class="section"></div>
