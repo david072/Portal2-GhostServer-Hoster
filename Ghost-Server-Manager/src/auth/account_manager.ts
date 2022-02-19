@@ -1,9 +1,8 @@
 import { Database as sqlite3Database } from "sqlite3";
 import { open, Database } from "sqlite";
 import { join } from "path";
-import { logger } from "../util/logger";
-import { createHash, randomBytes } from "crypto";
-import { addDays } from "date-fns";
+import { randomBytes } from "crypto";
+import { addDays, addHours } from "date-fns";
 import bcrypt from "bcrypt";
 
 const dbPath = join(__dirname, "../../db/users.db");
@@ -41,6 +40,13 @@ export async function openDatabase() {
         token TEXT NOT NULL, 
         expirationDate NUMBER NOT NULL
     );`);
+
+	await db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		token TEXT NOT NULL,
+		expirationDate NUMBER NOT NULL
+	);`);
 }
 
 export async function closeDatabase() {
@@ -51,7 +57,7 @@ export async function closeDatabase() {
 export async function createUser(email: string, password: string): Promise<boolean> {
 	if (!db) return;
 
-	const passwordHash = await bcrypt.hash(password, 10); // Last parameter is the number of salt rounds, 10 is fine
+	const passwordHash = await getPasswordHash(password);
 
 	const row = await db.get(`SELECT * FROM users WHERE email = ?`, [email]);
 	if (row) return false;
@@ -67,10 +73,7 @@ export async function generateAuthToken(email: string, password: string): Promis
 	const row = await db.get("SELECT * FROM users WHERE email = ?", [email]);
 	if (!row) return;
 
-	const hash = row.passwordHash;
-
 	const match = await bcrypt.compare(password, row.passwordHash);
-
 	if (!match) return;
 
 	const authToken = randomBytes(30).toString('hex');
@@ -104,4 +107,61 @@ export async function getUser(authToken: string): Promise<User | undefined> {
 export async function deleteUser(id: number) {
 	await db.run("DELETE FROM auth_tokens WHERE user_id = ?", [id]);
 	await db.run("DELETE FROM users WHERE id = ?", [id]);
+}
+
+export async function generatePasswordResetToken(email: string): Promise<string | undefined> {
+	if (!db) return;
+
+	await deleteExpiredPasswordResetTokens();
+
+	const userRow = await db.get("SELECT * FROM users WHERE email = ?", [email]);
+	if (!userRow) return;
+
+	const row = await db.get("SELECT * FROM password_reset_tokens WHERE user_id = ?", [userRow.id]);
+	if (row)
+		await db.run("DELETE FROM password_reset_tokens WHERE user_id = ?", [userRow.id]);
+
+	const token = randomBytes(30).toString('hex');
+	const expirationDate = addHours(Date.now(), 5).getTime();
+	await db.exec(`INSERT INTO password_reset_tokens (user_id, token, expirationDate) VALUES (${userRow.id}, '${token}', ${expirationDate});`);
+
+	return token;
+}
+
+export async function validatePasswordResetCredentials(token: string, email: string): Promise<boolean> {
+	if (!db) return false;
+
+	await deleteExpiredPasswordResetTokens();
+
+	const tokenRow = await db.get("SELECT * FROM password_reset_tokens WHERE token = ?", [token]);
+	if (!tokenRow) return false;
+
+	const userRow = await db.get("SELECT * FROM users WHERE id = ?", [tokenRow.user_id]);
+	if (!userRow) return false;
+	if (userRow.email !== email) return false;
+
+	return true;
+}
+
+export async function resetPassword(token: string, email: string, newPassword: string): Promise<boolean> {
+	if (!db) return false;
+
+	await deleteExpiredPasswordResetTokens();
+
+	const tokenRow = await db.get("SELECT * FROM password_reset_tokens WHERE token = ?", [token]);
+	if (!tokenRow) return;
+
+	const newPasswordHash = await getPasswordHash(newPassword);
+	await db.run(`UPDATE users SET passwordHash = '${newPasswordHash}' WHERE id = ?`, [tokenRow.user_id]);
+	await db.run("DELETE FROM password_reset_tokens WHERE id = ?", [tokenRow.id]);
+
+	return true;
+}
+
+function deleteExpiredPasswordResetTokens() {
+	return db.run("DELETE FROM password_reset_tokens WHERE expirationDate < ?", [Date.now()]);
+}
+
+function getPasswordHash(password: string): Promise<string> {
+	return bcrypt.hash(password, 10); // Last parameter is the number of salt rounds, 10 is fine
 }

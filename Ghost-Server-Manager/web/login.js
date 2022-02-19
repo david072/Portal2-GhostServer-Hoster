@@ -1,31 +1,48 @@
 $('#login-form').submit((event) => {
-    event.preventDefault();
-    $('#submit-button').prop('disabled', true);
+	event.preventDefault();
+	$('#submit-button').prop('disabled', true);
 
-    const email = $('#email').val().trim();
-    const password = $('#password').val().trim();
+	const email = $('#email').val().trim();
+	const password = $('#password').val().trim();
 
-    fetch("/auth/generateAuthToken", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, password: password })
-    }).then(async (res) => {
-        if (res.status !== 200) {
-            if (res.status === 404) M.toast({ html: "This account does not exist!" });
-            else M.toast({ html: "An error occured" });
+	fetch("/auth/generateAuthToken", {
+		method: "POST",
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ email: email, password: password })
+	}).then(async (res) => {
+		if (res.status !== 200) {
+			if (res.status === 404) M.toast({ html: "This account does not exist!" });
+			else M.toast({ html: "An error occured" });
 
-            console.log(`Error creating account. Status other than 201 received: ${res.status}`);
-            $('#submit-button').prop('disabled', false);
-            return;
-        }
+			console.log(`Error creating account. Status other than 201 received: ${res.status}`);
+			$('#submit-button').prop('disabled', false);
+			return;
+		}
 
-        const redirectTarget = new URLSearchParams(window.location.search).get("target");
-        if (redirectTarget === null) {
-            window.location.href = "./index.html";
-        }
-        else {
-            const url = decodeURIComponent(redirectTarget);
-            window.location.href = url;
-        }
-    });
+		const redirectTarget = new URLSearchParams(window.location.search).get("target");
+		if (redirectTarget === null) {
+			window.location.href = "./index.html";
+		}
+		else {
+			const url = decodeURIComponent(redirectTarget);
+			window.location.href = url;
+		}
+	});
+});
+
+$('#reset-password-btn').click(async () => {
+	const email = $('#email').val().trim();
+	if (email.length === 0) {
+		M.toast({ html: "Please put your email into the email field." });
+		return;
+	}
+
+	const response = await fetch(`/auth/sendResetPassword?email=${email}`, { method: "GET" });
+	if (response.status !== 200) {
+		if (response.status === 400) M.toast({ html: "A user with this email does not exist!" });
+		else M.toast({ html: `An error occured sending an email to ${email}. Please try again later.` });
+		return;
+	}
+
+	M.toast({ html: `A password-reset email has been sent to ${email}. (Please also check in your 'spam' folder)` });
 });

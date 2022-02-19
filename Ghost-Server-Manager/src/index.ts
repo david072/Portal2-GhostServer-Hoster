@@ -7,6 +7,7 @@ import { router as containerRouter } from "./api/container_router";
 import path from "path";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
+import { init } from "./util/mailer";
 
 const app = express();
 
@@ -31,5 +32,7 @@ app.use("/container", containerRouter);
 // 	res.status(200).send("Containers stopped! Exiting...");
 // 	exit();
 // });
+
+init();
 
 app.listen(8080, () => { console.log("Server listening on port 8080"); });
