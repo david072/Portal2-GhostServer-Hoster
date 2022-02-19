@@ -68,8 +68,9 @@ export async function updateDb() {
     await updateDatabase(runningContainerIds);
 }
 
-export async function stopContainer(containerId: string, port: number) {
+export async function stopContainer(port: number, updateDatabase: boolean = true) {
     await axios.get(`http://localhost:${port}/stopServer`);
+    if (updateDatabase) await updateDb();
 
     // const container = docker.getContainer(containerId);
     // await container.stop();
@@ -83,10 +84,12 @@ export async function deleteAllContainersFromUser(userId: number) {
 
     const promises: Promise<void>[] = [];
     containers.forEach((container) => {
-        promises.push(stopContainer(container.containerId, container.port).then(() => {
+        promises.push(stopContainer(container.port, false).then(() => {
             deleteContainer(container.id);
         }));
     });
+
+    await updateDb();
 
     await Promise.all(promises);
 }

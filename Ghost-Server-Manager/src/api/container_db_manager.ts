@@ -1,6 +1,9 @@
 import { join } from "path";
 import { Database as sqlite3Database } from "sqlite3";
 import { open, Database } from "sqlite";
+import { addHours } from "date-fns";
+import { scheduleJob } from "node-schedule";
+import { stopContainer } from "./docker_helper";
 
 const dbPath = join(__dirname, "../../db/containers.db");
 
@@ -40,6 +43,11 @@ export async function openDatabase() {
 		user_id NUMBER NOT NULL,
 		name STRING
     );`);
+
+	try {
+		await db.run(`ALTER TABLE containers ADD COLUMN expirationDate NUMBER NOT NULL DEFAULT ${addHours(Date.now(), 5).getTime()}`);
+	}
+	catch { }
 }
 
 export async function closeDatabase() {
@@ -52,15 +60,23 @@ export async function updateDatabase(runningContainerIds: string[]) {
 }
 
 export async function insertContainer(id: string, port: number, wsPort: number, userId: number, name: string = "") {
+	const expirationDate = addHours(Date.now(), 5);
 	await db.run(`INSERT INTO containers 
-		(container_id, port, ws_port, user_id, name) 
+		(container_id, port, ws_port, user_id, name, expirationDate) 
 		VALUES (
-			'${id}', 
+			'${id}',
 			'${port}', 
 			'${wsPort}', 
 			${userId}, 
-			'${name}'
+			'${name}',
+			${expirationDate.getTime()}
 		);`);
+
+	// Delete container after expiration date
+	scheduleJob(expirationDate, async () => {
+		if (!db) await openDatabase();
+		await stopContainer(port);
+	});
 }
 
 export async function getContainersForUser(userId: number) {
