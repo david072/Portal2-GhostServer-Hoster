@@ -22,8 +22,16 @@ An official version of the website can be found at [ghost.portal2.sr](https://gh
 1. Go into `/Ghost-Server-Manager`
 2. Create the files `users.db` and `containers.db` in `./db/`
 3. Go into `./web/util/resources.js` and edit the hostname variable to the hostname of your server
-4. Run `npm install`
-5. Run `npm start`
+4. Go into `./res/` and create a file called `mail_account.json`. That is the email configuration used by the email-client, which sends you for example password reset emails. Fill it according to the following scheme:
+```
+{
+    "service": "your-service (e.g. gmail)",
+    "user": "your-email",
+    "password": "your-password"
+}
+```
+6. Run `npm install`
+7. Run `npm start`
 
 Leave the Ghost-Server-Manager running in the background. It will serve the website and provide the API backend for it.
 
