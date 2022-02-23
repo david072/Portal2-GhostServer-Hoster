@@ -21,7 +21,8 @@ export async function createContainer(port: number, wsPort: number): Promise<str
                 [`${wsPort}/tcp`]: [{
                     "HostPort": wsPort.toString()
                 }]
-            }
+            },
+            NetworkMode: "host"
         },
         AttachStdout: true,
         Image: "ghost-server-hoster"
