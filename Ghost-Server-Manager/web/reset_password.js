@@ -28,6 +28,7 @@ $(document).ready(async () => {
 		return;
 	}
 
+	$('#subtitle').text(`For ${email}`);
 	$('#loading').hide();
 	$('#main-content').show();
 });
