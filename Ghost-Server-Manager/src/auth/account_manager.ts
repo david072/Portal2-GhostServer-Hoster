@@ -4,6 +4,7 @@ import { join } from "path";
 import { randomBytes } from "crypto";
 import { addDays, addHours } from "date-fns";
 import bcrypt from "bcrypt";
+import { logger } from "../util/logger";
 
 const dbPath = join(__dirname, "../../db/users.db");
 
@@ -62,7 +63,10 @@ export async function closeDatabase() {
 }
 
 export async function createUser(email: string, password: string): Promise<boolean> {
-	if (!db) return;
+	if (!db) {
+		logger.error({ source: "createUser - DB", message: "Database not open!" });
+		return false;
+	}
 
 	const passwordHash = await getPasswordHash(password);
 
@@ -75,13 +79,22 @@ export async function createUser(email: string, password: string): Promise<boole
 }
 
 export async function generateAuthToken(email: string, password: string): Promise<string | undefined> {
-	if (!db) return;
+	if (!db) {
+		logger.error({ source: "generateAuthToken - DB", message: "Database not open!" });
+		return;
+	}
 
 	const row = await db.get("SELECT * FROM users WHERE email = ?", [email]);
-	if (!row) return;
+	if (!row) {
+		logger.error({ source: "generateAuthToken - DB", message: `No user matching email ${email} found!` });
+		return;
+	}
 
 	const match = await bcrypt.compare(password, row.passwordHash);
-	if (!match) return;
+	if (!match) {
+		logger.error({ source: "generateAuthToken - DB", message: "Passwords don't match" });
+		return;
+	}
 
 	const authToken = randomBytes(30).toString('hex');
 	// Hint: Parse expirationDate with new Date(expirationDate) :^)
@@ -92,7 +105,10 @@ export async function generateAuthToken(email: string, password: string): Promis
 }
 
 export async function getUser(authToken: string): Promise<User | undefined> {
-	if (!db) return;
+	if (!db) {
+		logger.error({ source: "getUser - DB", message: "Database not open!" });
+		return;
+	}
 
 	// Delete expired authTokens
 	await db.run("DELETE FROM auth_tokens WHERE expirationDate < ?", [Date.now()]);
@@ -111,7 +127,10 @@ export async function deleteUser(id: number) {
 }
 
 export async function generatePasswordResetToken(email: string): Promise<string | undefined> {
-	if (!db) return;
+	if (!db) {
+		logger.error({ source: "generatePasswordResetToken - DB", message: "Database not open!" });
+		return;
+	}
 
 	await deleteExpiredPasswordResetTokens();
 
@@ -130,7 +149,10 @@ export async function generatePasswordResetToken(email: string): Promise<string 
 }
 
 export async function validatePasswordResetCredentials(token: string, email: string): Promise<boolean> {
-	if (!db) return false;
+	if (!db) {
+		logger.error({ source: "validatePasswordResetCredentials - DB", message: "Database not open!" });
+		return false;
+	}
 
 	await deleteExpiredPasswordResetTokens();
 
