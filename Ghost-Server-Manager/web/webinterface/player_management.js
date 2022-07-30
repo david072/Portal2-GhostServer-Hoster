@@ -3,19 +3,21 @@ import { sendToContainer, containerId, authenticate } from "./util.js";
 let actionModalAcceptedAction = undefined;
 
 const playerTableRowTemplate = `
-<td>{playerName}</td>
-<td>{playerId}</td>
-<td>{connectionType}</td>
-<td>
-	<div class="center">
-		<button id="disconnect-player-btn" class="btn waves-effect waves-light" data-playerid={playerId} data-playername={playerName}>
-			<i class="material-icons">logout</i>
-		</button>
-		<button id="ban-player-btn" class="btn waves-effect waves-light red" data-playerid={playerId} data-playername={playerName}>
-			<i class="material-icons">cancel</i>
-		</button>
-	</div>
-</td>
+<tr>
+	<td>{playerName}</td>
+	<td>{playerId}</td>
+	<td>{connectionType}</td>
+	<td>
+		<div class="center">
+			<button id="disconnect-player-btn" class="btn waves-effect waves-light" data-playerid={playerId} data-playername={playerName}>
+				<i class="material-icons">logout</i>
+			</button>
+			<button id="ban-player-btn" class="btn waves-effect waves-light red" data-playerid={playerId} data-playername={playerName}>
+				<i class="material-icons">cancel</i>
+			</button>
+		</div>
+	</td>
+</tr>
 `;
 
 $(document).ready(async () => {
