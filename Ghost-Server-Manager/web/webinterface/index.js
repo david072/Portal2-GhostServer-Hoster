@@ -23,8 +23,8 @@ async function fetchSettings() {
 	$('#pre-countdown-cmd').val(json.preCommands);
 	$('#post-countdown-cmd').val(json.postCommands);
 	M.updateTextFields();
-	M.textareaAutoResize('#pre-countdown-cmd');
-	M.textareaAutoResize('#post-countdown-cmd');
+	M.textareaAutoResize($('#pre-countdown-cmd'));
+	M.textareaAutoResize($('#post-countdown-cmd'));
 }
 
 $('#copy-connect-cmd').click(copyConnectCmdBtnListener);
