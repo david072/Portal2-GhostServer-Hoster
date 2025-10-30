@@ -49,6 +49,17 @@ abstract class GhostServerSettings with _$GhostServerSettings {
       _$GhostServerSettingsFromJson(json);
 }
 
+@freezed
+abstract class Player with _$Player {
+  const factory Player({
+    required int id,
+    required String name,
+    required bool isSpectator,
+  }) = _Player;
+
+  factory Player.fromJson(Json json) => _$PlayerFromJson(json);
+}
+
 class _Backend {
   const _Backend();
 
@@ -153,6 +164,54 @@ class _Backend {
 
   Future<void> sendServerMessage(int id, String message) => _put(
     "$_baseContainerUri/serverMessage?id=$id&message=$message",
+    authenticated: true,
+  );
+
+  Future<void> startCountdown(int id) =>
+      _put("$_baseContainerUri/startCountdown", authenticated: true);
+
+  Future<bool> getAcceptingPlayers(int id) async {
+    var response = await _get(
+      "$_baseContainerUri/acceptingPlayers?id=$id",
+      authenticated: true,
+    );
+    return response.body == "true";
+  }
+
+  Future<void> setAcceptingPlayers(int id, bool accept) => _put(
+    "$_baseContainerUri/acceptingPlayers?id=$id&value=${accept ? "true" : "false"}",
+    authenticated: true,
+  );
+
+  Future<bool> getAcceptingSpectators(int id) async {
+    var response = await _get(
+      "$_baseContainerUri/acceptingSpectators?id=$id",
+      authenticated: true,
+    );
+    return response.body == "true";
+  }
+
+  Future<void> setAcceptingSpectators(int id, bool accept) => _put(
+    "$_baseContainerUri/acceptingSpectators?id=$id&value=${accept ? "true" : "false"}",
+    authenticated: true,
+  );
+
+  Future<List<Player>> getPlayers(int id) async {
+    var response = await _get(
+      "$_baseContainerUri/listPlayers?id=$id",
+      authenticated: true,
+    );
+    var resp = jsonDecode(response.body) as List<dynamic>;
+    return resp.cast<Json>().map(Player.fromJson).toList();
+  }
+
+  Future<void> disconnectPlayerById(int serverId, int playerId) => _put(
+    "$_baseContainerUri/disconnectPlayer?id=$serverId&player_id=$playerId",
+    authenticated: true,
+  );
+
+  Future<void> banPlayerById(int serverId, int playerId) => _put(
+    "$_baseContainerUri/banPlayer?id=$serverId&player_id=$playerId",
     authenticated: true,
   );
 

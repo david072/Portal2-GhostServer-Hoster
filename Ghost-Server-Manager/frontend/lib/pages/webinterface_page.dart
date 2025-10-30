@@ -14,8 +14,12 @@ class WebinterfacePage extends StatefulWidget {
 
 class _WebinterfacePageState extends State<WebinterfacePage> {
   bool loading = true;
+
   GhostServer? server;
   GhostServerSettings? settings;
+  bool acceptingPlayers = true;
+  bool acceptingSpectators = true;
+  List<Player> players = [];
 
   int navigationRailSelectedIndex = 0;
 
@@ -27,8 +31,13 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
 
   Future<void> setup() async {
     setState(() => loading = true);
+
     server = await Backend.getGhostServerById(widget.serverId);
     settings = await Backend.getGhostServerSettingsById(widget.serverId);
+    acceptingPlayers = await Backend.getAcceptingPlayers(widget.serverId);
+    acceptingSpectators = await Backend.getAcceptingSpectators(widget.serverId);
+    players = await Backend.getPlayers(widget.serverId);
+
     setState(() => loading = false);
   }
 
@@ -74,6 +83,11 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
                       selectedIcon: const Icon(Icons.settings),
                       label: const Text("General"),
                     ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.people_outlined),
+                      selectedIcon: const Icon(Icons.people),
+                      label: const Text("Players"),
+                    ),
                   ],
                 ),
                 const VerticalDivider(),
@@ -85,11 +99,20 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
                       child: SingleChildScrollView(
                         child: SizedBox(
                           width: 2 * MediaQuery.sizeOf(context).width / 3,
-                          child: _GeneralTab(
-                            serverId: widget.serverId,
-                            server: server!,
-                            settings: settings!,
-                          ),
+                          child: switch (navigationRailSelectedIndex) {
+                            1 => _PlayersTab(
+                              serverId: widget.serverId,
+                              acceptingPlayers: acceptingPlayers,
+                              acceptingSpectators: acceptingSpectators,
+                              players: players,
+                              update: setup,
+                            ),
+                            _ => _GeneralTab(
+                              serverId: widget.serverId,
+                              server: server!,
+                              settings: settings!,
+                            ),
+                          },
                         ),
                       ),
                     ),
@@ -99,7 +122,13 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
             )
           : const Center(child: CircularProgressIndicator()),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () async {
+          await Backend.startCountdown(widget.serverId);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: const Text("Countdown started!")),
+          );
+        },
         icon: const Icon(Icons.play_arrow_outlined),
         label: const Text("Start Countdown"),
       ),
@@ -146,6 +175,163 @@ class _GeneralTab extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _ServerMessageSection(serverId: serverId),
+      ],
+    );
+  }
+}
+
+class _PlayersTab extends StatefulWidget {
+  const _PlayersTab({
+    required this.serverId,
+    required this.acceptingPlayers,
+    required this.acceptingSpectators,
+    required this.players,
+    required this.update,
+  });
+
+  final int serverId;
+  final bool acceptingPlayers;
+  final bool acceptingSpectators;
+  final List<Player> players;
+
+  final void Function() update;
+
+  @override
+  State<_PlayersTab> createState() => _PlayersTabState();
+}
+
+class _PlayersTabState extends State<_PlayersTab> {
+  bool acceptingPlayers = true;
+  bool acceptingSpectators = true;
+
+  @override
+  void initState() {
+    super.initState();
+    acceptingPlayers = widget.acceptingPlayers;
+    acceptingSpectators = widget.acceptingSpectators;
+  }
+
+  Future<void> updateAcceptingSettings() async {
+    await Backend.setAcceptingPlayers(widget.serverId, acceptingPlayers);
+    await Backend.setAcceptingSpectators(widget.serverId, acceptingSpectators);
+  }
+
+  Future<bool> showConfirmationDialog(
+    String title,
+    String content,
+    String confirmAction,
+  ) async =>
+      (await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(confirmAction),
+            ),
+          ],
+        ),
+      )) ??
+      false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          value: acceptingPlayers,
+          title: const Text("Accept Players"),
+          onChanged: (v) {
+            acceptingPlayers = v;
+            updateAcceptingSettings();
+            setState(() {});
+          },
+        ),
+        SwitchListTile(
+          value: acceptingSpectators,
+          title: const Text("Accept Spectators"),
+          onChanged: (v) {
+            acceptingSpectators = v;
+            updateAcceptingSettings();
+            setState(() {});
+          },
+        ),
+        const SizedBox(height: 20),
+        Text(
+          "ConnectedPlayers",
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 10),
+        widget.players.isNotEmpty
+            ? ListView.builder(
+                shrinkWrap: true,
+                itemCount: widget.players.length,
+                itemBuilder: (context, i) {
+                  var player = widget.players[i];
+                  return ListTile(
+                    title: Text(
+                      player.name,
+                    ),
+                    subtitle: Text(
+                      "ID: ${player.id}"
+                      "${player.isSpectator ? " • Spectator" : ""}",
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () async {
+                            var shouldKick = await showConfirmationDialog(
+                              "Kick Player",
+                              "Do you really want to kick the player ${player.name}",
+                              "Kick",
+                            );
+
+                            if (shouldKick) {
+                              await Backend.disconnectPlayerById(
+                                widget.serverId,
+                                player.id,
+                              );
+                              widget.update();
+                            }
+                          },
+                          icon: const Icon(Icons.logout),
+                          label: const Text("Kick"),
+                        ),
+                        const SizedBox(width: 10),
+                        TextButton.icon(
+                          onPressed: () async {
+                            var shouldBan = await showConfirmationDialog(
+                              "Ban Player",
+                              "Do you really want to ban the player ${player.name}",
+                              "Ban",
+                            );
+
+                            if (shouldBan) {
+                              await Backend.banPlayerById(
+                                widget.serverId,
+                                player.id,
+                              );
+                              widget.update();
+                            }
+                          },
+                          icon: const Icon(Icons.remove_circle_outline),
+                          label: const Text("Ban"),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              )
+            : const Text("No players connected!"),
       ],
     );
   }

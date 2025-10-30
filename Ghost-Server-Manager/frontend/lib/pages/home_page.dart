@@ -115,9 +115,19 @@ class _GhostServerCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(
-                  server.name,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      server.name,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    Text(
+                      "Expires ${server.relativeRemainingDuration}",
+                      style: TextStyle(color: Theme.of(context).hintColor),
+                    ),
+                  ],
                 ),
                 const Spacer(),
                 IconButton(
