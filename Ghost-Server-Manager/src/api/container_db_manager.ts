@@ -3,7 +3,8 @@ import { Database as sqlite3Database } from "sqlite3";
 import { open, Database } from "sqlite";
 import { addHours, formatDistance } from "date-fns";
 import { scheduleJob } from "node-schedule";
-import { stopContainer, updateDb } from "./docker_helper";
+import * as docker from "./docker_helper";
+import * as user_db from "../auth/account_manager";
 
 const dbPath = join(__dirname, "../../db/containers.db");
 
@@ -48,34 +49,20 @@ export async function openDatabase() {
 		user_id NUMBER NOT NULL,
 		name STRING
     );`);
-
-	try {
-		const expirationDate = addHours(Date.now(), 5);
-		await db.run(`ALTER TABLE containers ADD COLUMN expirationDate NUMBER NOT NULL DEFAULT ${expirationDate.getTime()}`);
-		
-		scheduleJob(expirationDate, async () => {
-			if (!db) openDatabase();
-			const rows = await db.all("SELECT * FROM containers WHERE expirationDate < ?", [Date.now()]);
-			let promises: Promise<void>[] = [];
-			rows.forEach((row) => { promises.push(stopContainer(row.port, false)); });
-
-			await Promise.all(promises);
-			updateDb();
-		});
-	}
-	catch { }
 }
 
 export async function closeDatabase() {
+	if (db === undefined) return;
 	await db.close();
 	db = undefined;
 }
 
-export async function updateDatabase(runningContainerIds: string[]) {
+export async function removeContainersNotRunning() {
+	const runningContainerIds = await docker.getRunningContainerIds();
 	await db?.run(`DELETE FROM containers WHERE container_id NOT IN (${runningContainerIds.map((_) => '?').join(',')})`, runningContainerIds);
 }
 
-export async function insertContainer(id: string, port: number, wsPort: number, userId: number, name: string = "") {
+export async function createContainer(id: string, port: number, wsPort: number, userId: number, name: string = "") {
 	const expirationDate = addHours(Date.now(), 5);
 	await db.run(`INSERT INTO containers 
 		(container_id, port, ws_port, user_id, name, expirationDate) 
@@ -91,7 +78,7 @@ export async function insertContainer(id: string, port: number, wsPort: number, 
 	// Delete container after expiration date
 	scheduleJob(expirationDate, async () => {
 		if (!db) await openDatabase();
-		await stopContainer(port);
+		await docker.stopContainer(port);
 	});
 }
 
@@ -105,11 +92,22 @@ export async function getAllContainers(): Promise<Container[]> {
 	return rows.map(row => Container.fromRow(row));
 }
 
-export async function getContainer(id: number): Promise<Container | undefined> {
-	const row = await db.get("SELECT * FROM containers WHERE id = ?", [id]);
+export async function getContainer(id: number, user: user_db.User): Promise<Container | undefined> {
+	let row = undefined;
+	if (user.role !== user_db.Role.Admin) {
+		row = await db.get("SELECT * FROM containers WHERE id = ? AND user_id = ?", [id, user.id]);
+	} else {
+		row = await db.get("SELECT * FROM containers WHERE id = ?", [id]);
+	}
 	if (!row) return;
 
 	return Container.fromRow(row);
+}
+
+export async function getContainerFromParameter(param: any, user: user_db.User): Promise<Container | undefined> {
+	const id = +param;
+	if (isNaN(id) || !isFinite(id)) return undefined;
+	return await getContainer(id, user)
 }
 
 export async function getAllColumnValues<T = any>(column: string): Promise<T[]> {

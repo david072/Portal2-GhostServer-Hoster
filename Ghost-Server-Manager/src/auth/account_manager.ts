@@ -6,23 +6,30 @@ import { addDays, addHours } from "date-fns";
 import bcrypt from "bcrypt";
 import { logger } from "../util/logger";
 
+const AUTH_TOKEN_DURATION_DAYS = 7;
+
 const dbPath = join(__dirname, "../../db/users.db");
 
 var db: Database | undefined;
 
+export enum Role {
+	User = "user",
+	Admin = "admin",
+}
+
 export class User {
 	id: number;
 	email: string;
-	role: string;
+	role: Role;
 
-	constructor(id: number, email: string, role: string) {
+	constructor(id: number, email: string, role: Role) {
 		this.id = id;
 		this.email = email;
 		this.role = role;
 	}
 
 	static fromRow(row: any): User {
-		return new User(row.id, row.email, row.role);
+		return new User(row.id, row.email, row.role === Role.Admin.toString() ? Role.Admin : Role.User);
 	}
 }
 
@@ -58,55 +65,56 @@ export async function openDatabase() {
 }
 
 export async function closeDatabase() {
+	if (db === undefined) return;
 	await db.close();
 	db = undefined;
 }
 
 export async function createUser(email: string, password: string): Promise<boolean> {
 	if (!db) {
-		logger.error({ source: "createUser - DB", message: "Database not open!" });
+		logger.error({ source: "createUser", message: "Database not open!" });
 		return false;
 	}
-
-	const passwordHash = await getPasswordHash(password);
 
 	const row = await db.get(`SELECT * FROM users WHERE email = ?`, [email]);
 	if (row) return false;
 
-	await db.run(`INSERT INTO users (email, passwordHash) VALUES ('${email}', '${passwordHash}');`);
+	const passwordHash = await getPasswordHash(password);
+	await db.run(`INSERT INTO users (email, passwordHash) VALUES (?, ?);`, [email, passwordHash]);
 
 	return true;
 }
 
-export async function generateAuthToken(email: string, password: string): Promise<string | undefined> {
+/// Returns the auth token and its expiration date.
+export async function generateAuthToken(email: string, password: string): Promise<[string, Date] | undefined> {
 	if (!db) {
-		logger.error({ source: "generateAuthToken - DB", message: "Database not open!" });
+		logger.error({ source: "generateAuthToken", message: "Database not open!" });
 		return;
 	}
 
 	const row = await db.get("SELECT * FROM users WHERE email = ?", [email]);
 	if (!row) {
-		logger.error({ source: "generateAuthToken - DB", message: `No user matching email ${email} found!` });
+		logger.error({ source: "generateAuthToken", message: `No user matching email ${email} found!` });
 		return;
 	}
 
 	const match = await bcrypt.compare(password, row.passwordHash);
 	if (!match) {
-		logger.error({ source: "generateAuthToken - DB", message: "Passwords don't match" });
+		logger.warn({ source: "generateAuthToken", message: "Passwords don't match" });
 		return;
 	}
 
 	const authToken = randomBytes(30).toString('hex');
 	// Hint: Parse expirationDate with new Date(expirationDate) :^)
-	const expirationDate = addDays(Date.now(), 7).getTime();
-	await db.run(`INSERT INTO auth_tokens (user_id, token, expirationDate) VALUES (${row.id}, '${authToken}', ${expirationDate});`);
+	const expirationDate = addDays(Date.now(), AUTH_TOKEN_DURATION_DAYS);
+	await db.run("INSERT INTO auth_tokens (user_id, token, expirationDate) VALUES (?, ?, ?);", [row.id, authToken, expirationDate.getTime()]);
 
-	return authToken;
+	return [authToken, expirationDate];
 }
 
 export async function getUser(authToken: string): Promise<User | undefined> {
 	if (!db) {
-		logger.error({ source: "getUser - DB", message: "Database not open!" });
+		logger.error({ source: "getUser", message: "Database not open!" });
 		return;
 	}
 

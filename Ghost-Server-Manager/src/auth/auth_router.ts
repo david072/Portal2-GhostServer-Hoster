@@ -1,17 +1,16 @@
 import express from "express";
 import { logger } from "../util/logger";
-import { createUser, generateAuthToken, openDatabase, closeDatabase, deleteUser, generatePasswordResetToken, validatePasswordResetCredentials, resetPassword } from "../auth/account_manager";
+import * as db from "../auth/account_manager";
 import { authMiddleware } from "../util/middleware";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { sendMailHtml } from "../util/mailer";
 import { deleteAllContainersFromUser } from "../api/docker_helper";
-import { addDays } from "date-fns";
 
 export const router = express.Router();
 
 router.use(async (req, res, next) => {
-	await openDatabase();
+	await db.openDatabase();
 	next();
 });
 
@@ -20,19 +19,19 @@ router.post("/register", async (req, res) => {
 
 	if (!("email" in req.body)) {
 		logger.warn({ source: "register", message: "No email in query. Exiting." });
-		res.status(400).send();
+		res.status(400).send("Expected email address");
 		return;
 	}
 	else if (!("password" in req.body)) {
 		logger.warn({ source: "register", message: "No password in query. Exiting." });
-		res.status(400).send();
+		res.status(400).send("Expected password");
 		return;
 	}
 
 	const email = req.body.email.toString();
 	const password = req.body.password.toString();
 
-	const successful = await createUser(email, password);
+	const successful = await db.createUser(email, password);
 	if (!successful) {
 		logger.warn({ source: "register", message: "The user already exists" });
 		res.status(409).send();
@@ -59,7 +58,7 @@ router.post("/generateAuthToken", async (req, res) => {
 	const email = req.body.email.toString();
 	const password = req.body.password.toString();
 
-	const authToken = await generateAuthToken(email, password);
+	const authToken = await db.generateAuthToken(email, password);
 	if (!authToken) {
 		logger.warn({ source: "generateAuthToken", message: "Fail! User not found." });
 		res.status(404).send();
@@ -76,28 +75,26 @@ router.post("/generateAuthToken2", async (req, res) => {
 
 	if (!("email" in req.body)) {
 		logger.warn({ source: "generateAuthToken2", message: "No email in query. Exiting." });
-		res.status(400).send();
+		res.status(400).send("Expected email address");
 		return;
 	}
 	else if (!("password" in req.body)) {
 		logger.warn({ source: "generateAuthToken2", message: "No password in query. Exiting." });
-		res.status(400).send();
+		res.status(400).send("Expected password");
 		return;
 	}
 
 	const email = req.body.email.toString();
 	const password = req.body.password.toString();
 
-	const authToken = await generateAuthToken(email, password);
+	const [authToken, expirationDate] = await db.generateAuthToken(email, password);
 	if (!authToken) {
-		logger.warn({ source: "generateAuthToken2", message: "Fail! User not found." });
-		res.status(404).send();
+		logger.warn({ source: "generateAuthToken2", message: "User not found." });
+		res.status(404).send("User not found");
 		return;
 	}
 
-	logger.info({ source: "generateAuthToken2", message: "Success!" });
-
-	res.status(200).json({ "token": authToken, "expires": addDays(Date.now(), 7).getTime() })
+	res.status(200).json({ "token": authToken, "expires": expirationDate.getTime() })
 });
 
 router.get("/user", authMiddleware, (req, res) => {
@@ -111,7 +108,7 @@ router.get("/sendResetPassword", async (req, res) => {
 	}
 
 	const email = req.query.email.toString();
-	const token = await generatePasswordResetToken(email);
+	const token = await db.generatePasswordResetToken(email);
 	if (token === undefined) {
 		logger.warn({ source: "sendResetPassword", message: "Could not find the user." });
 		res.status(400).send();
@@ -137,7 +134,7 @@ router.get("/sendResetPassword", async (req, res) => {
 
 router.delete("/delete", authMiddleware, async (req, res) => {
 	await deleteAllContainersFromUser(req.body.user.id);
-	await deleteUser(req.body.user.id);
+	await db.deleteUser(req.body.user.id);
 
 	res.status(200).send();
 });
@@ -157,7 +154,7 @@ router.post("/validatePasswordResetCredentials", async (req, res) => {
 		return;
 	}
 
-	if (!await validatePasswordResetCredentials(req.body.token, req.body.email)) {
+	if (!await db.validatePasswordResetCredentials(req.body.token, req.body.email)) {
 		logger.warn({ source: "validatePasswordResetCredentials", message: "Validation failed!" });
 		res.status(401).send();
 		return;
@@ -186,7 +183,7 @@ router.post("/resetPassword", async (req, res) => {
 		return;
 	}
 
-	if (!await resetPassword(req.body.token, req.body.email, req.body.newPassword)) {
+	if (!await db.resetPassword(req.body.token, req.body.email, req.body.newPassword)) {
 		logger.warn({ source: "resetPassword", message: "Password reset failed!" });
 		res.status(500).send();
 	}
@@ -195,4 +192,4 @@ router.post("/resetPassword", async (req, res) => {
 	res.status(200).send();
 });
 
-router.use(closeDatabase);
+router.use(db.closeDatabase);

@@ -1,12 +1,13 @@
 import Docker from "dockerode";
 import { logger } from "../util/logger";
 import axios from "axios";
-import { deleteContainer, getContainersForUser, updateDatabase } from "./container_db_manager";
+import * as db from "./container_db_manager";
 
 const docker = new Docker();
 
 export async function createContainer(port: number, wsPort: number): Promise<string> {
-    logger.info({ source: "create_instance", message: `Starting container with port: ${port} and wsPort: ${wsPort}...` });
+    logger.info({ source: "createContainer", message: `Starting container with port: ${port} and wsPort: ${wsPort}...` });
+
     const container = await docker.createContainer({
         Env: [`PORT=${port}`, `WS_PORT=${wsPort}`],
         ExposedPorts: {
@@ -32,10 +33,10 @@ export async function createContainer(port: number, wsPort: number): Promise<str
     await waitForContainerStart(container);
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    logger.info({ source: "create_instance", message: "Container ready. Requesting websocket start..." });
+    logger.info({ source: "createContainer", message: "Container ready. Requesting websocket start..." });
     await axios.get(`http://localhost:${port}/startServer`);
 
-    logger.info({ source: "create_instance", message: "Container successfully started" });
+    logger.info({ source: "createContainer", message: "Container successfully started" });
     return container.id;
 }
 
@@ -62,14 +63,13 @@ function waitForContainerStart(container: Docker.Container): Promise<void> {
     });
 }
 
-export async function updateDb() {
-    const runningContainerIds = (await docker.listContainers()).map((container) => container.Id);
-    await updateDatabase(runningContainerIds);
+export async function getRunningContainerIds(): Promise<string[]> {
+    return (await docker.listContainers()).map((container) => container.Id);
 }
 
 export async function stopContainer(port: number, updateDatabase: boolean = true) {
     await axios.get(`http://localhost:${port}/stopServer`);
-    if (updateDatabase) await updateDb();
+    if (updateDatabase) await db.removeContainersNotRunning();
 
     // const container = docker.getContainer(containerId);
     // await container.stop();
@@ -77,18 +77,17 @@ export async function stopContainer(port: number, updateDatabase: boolean = true
 }
 
 export async function deleteAllContainersFromUser(userId: number) {
-    await updateDb();
+    await db.removeContainersNotRunning();
 
-    const containers = await getContainersForUser(userId);
+    const containers = await db.getContainersForUser(userId);
 
     const promises: Promise<void>[] = [];
     containers.forEach((container) => {
         promises.push(stopContainer(container.port, false).then(() => {
-            deleteContainer(container.id);
+            db.deleteContainer(container.id);
         }));
     });
 
-    await updateDb();
-
     await Promise.all(promises);
+    await db.removeContainersNotRunning();
 }

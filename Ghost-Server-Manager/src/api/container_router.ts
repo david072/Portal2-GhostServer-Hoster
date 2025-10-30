@@ -1,66 +1,109 @@
 import { logger } from "../util/logger";
 import express, { Request } from "express";
 import { authMiddleware, containerAuthMiddleware } from "../util/middleware";
-import { closeDatabase } from "./container_db_manager";
+import * as db from "./container_db_manager";
 import axios, { Method } from "axios";
+import * as user_db from "../auth/account_manager";
 
 export const router = express.Router();
 
 // Require authentication for all sub-routes => Valid account and owning the requested container
-router.use(authMiddleware, containerAuthMiddleware);
+router.use(authMiddleware);
 
-router.get("/listPlayers", async (req, res) => {
-	const response = await sendToContainer(req, "/listPlayers", "GET");
+router.get("/:id/listPlayers", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	const response = await sendToContainer(container, "/listPlayers", "GET");
 	res.status(200).json(response.data);
 });
 
-router.get("/settings", async (req, res) => {
-	const response = await sendToContainer(req, "/settings", "GET");
+router.get("/:id/settings", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	const response = await sendToContainer(container, "/settings", "GET");
 	res.status(200).json(response.data);
 });
 
-router.put("/settings", async (req, res) => {
+router.put("/:id/settings", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
 	let query = `preCommands=${req.query.preCommands || ""}&postCommands=${req.query.postCommands || ""}&duration=${req.query.duration || ""}`;
-	await sendToContainer(req, `/settings?${query}`, "PUT");
+	await sendToContainer(container, `/settings?${query}`, "PUT");
 	res.status(200).send();
 });
 
-router.put("/startCountdown", async (req, res) => {
-	await sendToContainer(req, "/startCountdown", "PUT");
+router.post("/:id/startCountdown", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	await sendToContainer(container, "/startCountdown", "PUT");
 	res.status(200).send();
 });
 
-router.put("/serverMessage", async (req, res) => {
+router.post("/:id/serverMessage", async (req, res) => {
+	await db.openDatabase();
 	if (!("message" in req.query)) {
 		res.status(400).send();
 		return;
 	}
 
-	await sendToContainer(req, `/serverMessage?message=${req.query.message.toString()}`, "PUT");
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	await sendToContainer(container, `/serverMessage?message=${req.query.message.toString()}`, "PUT");
 	res.status(200).send();
 });
 
-router.put("/banPlayer", async (req, res) => {
-	logger.info({ source: "Container: banPlayer", message: "Route called" });
+router.put("/:id/banPlayer", async (req, res) => {
+	await db.openDatabase();
+	logger.info({ source: "banPlayer", message: "Route called" });
+
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
 
 	let idToBan: number | undefined;
 	let nameToBan: string | undefined;
 
 	if ("player_id" in req.query) {
 		idToBan = +req.query.player_id.toString();
-		logger.info({ source: "Container: banPlayer", message: `Banning player by id (${idToBan})` });
+		logger.info({ source: "banPlayer", message: `Banning player by id (${idToBan})` });
 	}
 	else if ("name" in req.query) {
 		nameToBan = req.query.name.toString();
-		logger.info({ source: "Container: banPlayer", message: `Banning player by name (${nameToBan})` });
+		logger.info({ source: "banPlayer", message: `Banning player by name (${nameToBan})` });
 	}
 	else {
-		logger.info({ source: "Container: banPlayer", message: "No player information in query. Exiting..." });
+		logger.info({ source: "banPlayer", message: "No player information in query. Exiting..." });
 		res.status(400).send();
 		return;
 	}
 
-	const response = await sendToContainer(req, `/banPlayer?${idToBan !== undefined ? `id=${idToBan}` : `name=${nameToBan}`}`, "PUT");
+	const response = await sendToContainer(container, `/banPlayer?${idToBan !== undefined ? `id=${idToBan}` : `name=${nameToBan}`}`, "PUT");
 	if (response.status !== 200) {
 		logger.error({ source: "Container: banPlayer", message: "Banning player failed!" });
 		res.status(response.status).send(response.data);
@@ -71,27 +114,34 @@ router.put("/banPlayer", async (req, res) => {
 	res.status(200).send();
 });
 
-router.put("/disconnectPlayer", async (req, res) => {
-	logger.info({ source: "Container: disconnectPlayer", message: "Route called" });
+router.put("/:id/disconnectPlayer", async (req, res) => {
+	await db.openDatabase();
+	logger.info({ source: "disconnectPlayer", message: "Route called" });
+
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
 
 	let idToDisconnect: number | undefined;
 	let nameToDisconnect: string | undefined;
 
 	if ("player_id" in req.query) {
 		idToDisconnect = +req.query.player_id.toString();
-		logger.info({ source: "Container: disconnectPlayer", message: `Disconnecting player by id (${idToDisconnect})` });
+		logger.info({ source: "disconnectPlayer", message: `Disconnecting player by id (${idToDisconnect})` });
 	}
 	else if ("name" in req.query) {
 		nameToDisconnect = req.query.name.toString();
-		logger.info({ source: "Container: disconnectPlayer", message: `Disconnecting player by name (${nameToDisconnect})` });
+		logger.info({ source: "disconnectPlayer", message: `Disconnecting player by name (${nameToDisconnect})` });
 	}
 	else {
-		logger.info({ source: "Container: disconnectPlayer", message: "No player information in query. Exiting..." });
+		logger.info({ source: "disconnectPlayer", message: "No player information in query. Exiting..." });
 		res.status(400).send();
 		return;
 	}
 
-	const response = await sendToContainer(req, `/disconnectPlayer?${idToDisconnect !== undefined ? `id=${idToDisconnect}` : `name=${nameToDisconnect}`}`, "PUT");
+	const response = await sendToContainer(container, `/disconnectPlayer?${idToDisconnect !== undefined ? `id=${idToDisconnect}` : `name=${nameToDisconnect}`}`, "PUT");
 	if (response.status !== 200) {
 		logger.error({ source: "Container: disconnectPlayer", message: "Disconnecting player failed!" });
 		res.status(response.status).send(response.data);
@@ -102,37 +152,65 @@ router.put("/disconnectPlayer", async (req, res) => {
 	res.status(200).send();
 });
 
-router.put("/acceptingPlayers", async (req, res) => {
+router.put("/:id/acceptingPlayers", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
 	let value: string | undefined = undefined;
 	if ("value" in req.query) value = req.query.value.toString();
 
-	await sendToContainer(req, `/acceptingPlayers?value=${value}`, "PUT");
+	await sendToContainer(container, `/acceptingPlayers?value=${value}`, "PUT");
 	res.status(200).send();
 });
 
-router.get("/acceptingPlayers", async (req, res) => {
-	const response = await sendToContainer(req, "/acceptingPlayers", "GET");
+router.get("/:id/acceptingPlayers", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	const response = await sendToContainer(container, "/acceptingPlayers", "GET");
 	res.status(200).json(response.data);
 });
 
-router.put("/acceptingSpectators", async (req, res) => {
+router.put("/:id/acceptingSpectators", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
 	let value: string | undefined = undefined;
 	if ("value" in req.query) value = req.query.value.toString();
 
-	await sendToContainer(req, `/acceptingSpectators?value=${value}`, "PUT");
+	await sendToContainer(container, `/acceptingSpectators?value=${value}`, "PUT");
 	res.status(200).send();
 });
 
-router.get("/acceptingSpectators", async (req, res) => {
-	const response = await sendToContainer(req, "/acceptingSpectators", "GET");
+router.get("/:id/acceptingSpectators", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	const response = await sendToContainer(container, "/acceptingSpectators", "GET");
 	res.status(200).json(response.data);
 });
 
-function sendToContainer(req: Request, route: string, method: Method) {
+function sendToContainer(container: db.Container, route: string, method: Method) {
 	return axios({
-		url: `http://localhost:${req.body.container.port}${route}`,
+		url: `http://localhost:${container.port}${route}`,
 		method: method
 	});
 }
 
-router.use(closeDatabase);
+router.use(db.closeDatabase, user_db.closeDatabase);

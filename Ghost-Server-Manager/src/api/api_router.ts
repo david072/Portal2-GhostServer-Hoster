@@ -1,77 +1,90 @@
 import express from "express";
 import { logger } from "../util/logger";
-import axios from "axios";
-import Docker from "dockerode";
 import { authMiddleware, containerAuthMiddleware } from "../util/middleware";
-import { closeDatabase, insertContainer, getAllColumnValues, updateDatabase, deleteContainer, getContainersForUser, getAllContainers } from "./container_db_manager";
-import { createContainer, stopContainer, updateDb } from "./docker_helper";
+import * as db from "./container_db_manager";
+import * as docker from "./docker_helper";
+import * as user_db from "../auth/account_manager";
 
 const MAX_NUMBER_OF_GHOST_SERVERS = 10;
 
 export const router = express.Router();
 
-// Require authentication for all sub-routes => Valid account and owning the requested container
-router.use(authMiddleware, containerAuthMiddleware);
+router.use(authMiddleware);
 
 router.post("/create", async (req, res) => {
-	logger.info({ source: "create_instance", message: "Route called" });
+	await db.openDatabase();
 
-	const ports = await getAllColumnValues<number>("port");
+	logger.info({ source: "createServer", message: "Route called" });
+
+	const ports = await db.getAllColumnValues<number>("port");
 	if (ports.length >= MAX_NUMBER_OF_GHOST_SERVERS) {
-		logger.error({ source: "create_instance", message: "Max number of concurrent ghost servers" });
-		res.status(507).send();
+		logger.error({ source: "createServer", message: "Max number of concurrent ghost servers" });
+		res.status(507).send("Max number of concurrent ghost servers");
 		return;
 	}
 
-	const wsPorts = await getAllColumnValues<number>("ws_port");
+	const wsPorts = await db.getAllColumnValues<number>("ws_port");
 
 	const port = randomRangeNotIn(5000, 10000, ports);
 	const wsPort = randomRangeNotIn(45000, 50000, wsPorts);
 	if (port === undefined || wsPort === undefined) {
-		logger.error({ source: "create_instance", message: "No available ports" });
-		res.status(507).send();
+		logger.error({ source: "createServer", message: "No available ports" });
+		res.status(507).send("No available ports");
 		return;
 	}
 
-	const containerId = await createContainer(port, wsPort);
+	const containerId = await docker.createContainer(port, wsPort);
 
-	const name = "name" in req.query ? req.query.name.toString() : ""
-	insertContainer(containerId, port, wsPort, req.body.user.id, name);
+	const name = "name" in req.query ? req.query.name.toString() : "Ghost Server"
+	db.createContainer(containerId, port, wsPort, req.body.user.id, name);
 
 	res.status(201).send();
 });
 
 router.get("/list", async (req, res) => {
-	await updateDb();
+	await db.openDatabase();
+	await db.removeContainersNotRunning();
 
-	if (req.body.user.role === "admin" && "showAll" in req.query) {
+	if (req.body.user.role === user_db.Role.Admin && "showAll" in req.query) {
 		if (req.query.showAll === "1") {
-			res.status(200).json(await getAllContainers());
+			res.status(200).json(await db.getAllContainers());
 			return;
 		}
 	}
 
-	const containers = await getContainersForUser(req.body.user.id);
+	const containers = await db.getContainersForUser(req.body.user.id);
 	res.status(200).json(containers);
 });
 
-router.get("/delete", containerAuthMiddleware, async (req, res) => {
+router.get("/delete/:id", async (req, res) => {
+	await db.openDatabase();
 	logger.info({ source: "delete", message: "Route called" });
 
-	const container = req.body.container;
-	await deleteContainer(container.id);
-	await stopContainer(container.port, true);
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	await db.deleteContainer(container.id);
+	await docker.stopContainer(container.port, true);
 
 	logger.info({ source: "delete", message: "Successfully stopped and deleted the container" });
 	res.status(200).send();
 });
 
-router.get("/validateContainerId", containerAuthMiddleware, (req, res) => {
-	// The middleware validates here, so if we get to this point, it was successful
-	res.status(200).json(req.body.container);
+router.get("/container/:id", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	res.status(200).json(container);
 });
 
-router.use(closeDatabase);
+router.use(db.closeDatabase, user_db.closeDatabase);
 
 function randomRangeNotIn(min: number, max: number, numbers: number[]): number | undefined {
 	if (numbers.length >= (max - min)) return undefined;
