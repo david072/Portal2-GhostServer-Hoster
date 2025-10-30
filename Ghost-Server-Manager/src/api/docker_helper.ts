@@ -22,7 +22,7 @@ export async function createContainer(port: number, wsPort: number): Promise<str
                     "HostPort": wsPort.toString()
                 }]
             },
-            NetworkMode: "host"
+            NetworkMode: "bridge"
         },
         AttachStdout: true,
         Image: "ghost-server-hoster"

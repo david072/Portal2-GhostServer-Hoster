@@ -166,7 +166,7 @@ NODE_FUNC(ban)
                                    {
         auto players = g_network.GetPlayerByName(playerName);
         for (auto cl : players)
-            g_network.BanClientIP(*cl); });
+            g_network.BanClientIP(cl->IP); });
 
     return v8::Undefined(isolate);
 }
@@ -185,7 +185,7 @@ NODE_FUNC(banId)
     g_network.ScheduleServerThread([=]
                                    {
         auto cl = g_network.GetClientByID(clientId);
-        if (cl) g_network.BanClientIP(*cl); });
+        if (cl) g_network.BanClientIP(cl->IP); });
 
     return v8::Undefined(isolate);
 }
