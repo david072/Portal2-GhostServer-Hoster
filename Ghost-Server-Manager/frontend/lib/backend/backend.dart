@@ -168,7 +168,7 @@ class _Backend {
   );
 
   Future<void> startCountdown(int id) =>
-      _put("$_baseContainerUri/startCountdown", authenticated: true);
+      _put("$_baseContainerUri/startCountdown?id=$id", authenticated: true);
 
   Future<bool> getAcceptingPlayers(int id) async {
     var response = await _get(
@@ -179,7 +179,7 @@ class _Backend {
   }
 
   Future<void> setAcceptingPlayers(int id, bool accept) => _put(
-    "$_baseContainerUri/acceptingPlayers?id=$id&value=${accept ? "true" : "false"}",
+    "$_baseContainerUri/acceptingPlayers?id=$id&value=${accept ? "1" : "0"}",
     authenticated: true,
   );
 
@@ -192,7 +192,7 @@ class _Backend {
   }
 
   Future<void> setAcceptingSpectators(int id, bool accept) => _put(
-    "$_baseContainerUri/acceptingSpectators?id=$id&value=${accept ? "true" : "false"}",
+    "$_baseContainerUri/acceptingSpectators?id=$id&value=${accept ? "1" : "0"}",
     authenticated: true,
   );
 
