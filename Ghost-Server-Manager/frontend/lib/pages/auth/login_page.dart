@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:portal2_ghost_sever_hoster/backend/backend.dart';
 import 'package:portal2_ghost_sever_hoster/main.dart';
+import 'package:portal2_ghost_sever_hoster/pages/auth/register_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
@@ -32,9 +33,9 @@ class _LoginPageState extends State<LoginPage> {
       context.go("/");
     } catch (e, stack) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Login failed")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login failed")),
+      );
       debugPrint("Failed logging in: $e\n$stack");
     }
   }
@@ -92,6 +93,11 @@ class _LoginPageState extends State<LoginPage> {
                 FilledButton(
                   onPressed: login,
                   child: const Text("Login"),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => context.go("/login/register"),
+                  child: const Text("Register"),
                 ),
               ],
             ),
