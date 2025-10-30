@@ -45,8 +45,8 @@ class _Backend {
       (throw "Please log in!");
 
   Future<http.Response> _postJson(
-    String uri,
-    Json json, {
+    String uri, {
+    Json json = const {},
     bool authenticated = false,
   }) async => http.post(
     Uri.parse(uri),
@@ -72,7 +72,7 @@ class _Backend {
   Future<(String, DateTime)> login(String email, String password) async {
     var response = await _postJson(
       "$_baseAuthUri/generateAuthToken2",
-      {"email": email, "password": password},
+      json: {"email": email, "password": password},
     );
     if (response.statusCode != 200) throw response.body;
     var json = jsonDecode(response.body);
@@ -85,10 +85,15 @@ class _Backend {
   Future<void> register(String email, String password) async {
     var response = await _postJson(
       "$_baseAuthUri/register",
-      {"email": email, "password": password},
+      json: {"email": email, "password": password},
     );
     if (response.statusCode != 201) throw response.body;
   }
+
+  Future<void> createGhostServer(String? name) => _postJson(
+    "$_baseApiUri/create${name != null ? "?name=$name" : ""}",
+    authenticated: true,
+  );
 
   Future<List<GhostServer>> getGhostServers() async {
     var response = await _get("$_baseApiUri/list", authenticated: true);

@@ -44,6 +44,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> setup() async {
+    setState(() => loading = true);
     if (!await checkLoggedIn()) {
       if (!mounted) return;
       context.go("/login");
@@ -79,6 +80,20 @@ class _HomePageState extends State<HomePage> {
                 ),
               )
             : const Center(child: CircularProgressIndicator()),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          var didCreate =
+              (await showDialog<bool>(
+                context: context,
+                builder: (context) => _CreateGhostServerDialog(),
+              )) ??
+              false;
+
+          if (didCreate) setup();
+        },
+        label: const Text("Create Ghost Server"),
+        icon: const Icon(Icons.add),
       ),
     );
   }
@@ -189,6 +204,62 @@ class _DeleteGhostServerDialog extends StatelessWidget {
             update();
           },
           child: const Text("Delete"),
+        ),
+      ],
+    );
+  }
+}
+
+class _CreateGhostServerDialog extends StatefulWidget {
+  const _CreateGhostServerDialog();
+
+  @override
+  State<_CreateGhostServerDialog> createState() =>
+      _CreateGhostServerDialogState();
+}
+
+class _CreateGhostServerDialogState extends State<_CreateGhostServerDialog> {
+  bool loading = false;
+  String name = "";
+
+  Future<void> createGhostServer() async {
+    setState(() => loading = true);
+    name = name.trim();
+    await Backend.createGhostServer(name.isEmpty ? null : name);
+    setState(() => loading = false);
+    if (!mounted) return;
+    Navigator.pop(context, true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Create Ghost Server"),
+      content: !loading
+          ? TextField(
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                alignLabelWithHint: true,
+                labelText: "Name (optional)",
+              ),
+              onChanged: (s) => name = s.trim(),
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                const SizedBox(height: 10),
+                const Text("Creating Ghost Server..."),
+              ],
+            ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: createGhostServer,
+          child: const Text("Create"),
         ),
       ],
     );
