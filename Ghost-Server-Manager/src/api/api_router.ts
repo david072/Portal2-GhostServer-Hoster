@@ -60,7 +60,7 @@ router.get("/delete", containerAuthMiddleware, async (req, res) => {
 
 	const container = req.body.container;
 	await deleteContainer(container.id);
-	await stopContainer(container.containerId, container.port);
+	await stopContainer(container.port, true);
 
 	logger.info({ source: "delete", message: "Successfully stopped and deleted the container" });
 	res.status(200).send();
