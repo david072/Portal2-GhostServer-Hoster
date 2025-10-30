@@ -105,13 +105,6 @@ class _GhostServerCard extends StatelessWidget {
   final GhostServer server;
   final void Function() update;
 
-  void copyConnectCommand(BuildContext context) {
-    Clipboard.setData(ClipboardData(text: server.connectCommand()));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: const Text("Copied!")),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -131,7 +124,7 @@ class _GhostServerCard extends StatelessWidget {
                   onPressed: () {
                     showDialog(
                       context: context,
-                      builder: (context) => _DeleteGhostServerDialog(
+                      builder: (context) => DeleteGhostServerDialog(
                         server: server,
                         update: update,
                       ),
@@ -147,25 +140,13 @@ class _GhostServerCard extends StatelessWidget {
               "To connect, paste the text below into your game's console and hit enter!",
             ),
             const SizedBox(height: 20),
-            TextField(
-              controller: TextEditingController(
-                text: server.connectCommand(),
-              ),
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  onPressed: () => copyConnectCommand(context),
-                  icon: const Icon(Icons.copy),
-                ),
-              ),
-              readOnly: true,
-            ),
+            GhostServerConnectCommandField(command: server.connectCommand()),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 FilledButton.tonal(
-                  onPressed: () {},
+                  onPressed: () => context.go("/webinterface/${server.id}"),
                   child: const Text("Webinterface"),
                 ),
               ],
@@ -177,8 +158,40 @@ class _GhostServerCard extends StatelessWidget {
   }
 }
 
-class _DeleteGhostServerDialog extends StatelessWidget {
-  const _DeleteGhostServerDialog({required this.server, required this.update});
+class GhostServerConnectCommandField extends StatelessWidget {
+  const GhostServerConnectCommandField({super.key, required this.command});
+
+  final String command;
+
+  void copyConnectCommand(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: command));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: const Text("Copied!")),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: TextEditingController(text: command),
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(),
+        suffixIcon: IconButton(
+          onPressed: () => copyConnectCommand(context),
+          icon: const Icon(Icons.copy),
+        ),
+      ),
+      readOnly: true,
+    );
+  }
+}
+
+class DeleteGhostServerDialog extends StatelessWidget {
+  const DeleteGhostServerDialog({
+    super.key,
+    required this.server,
+    required this.update,
+  });
 
   final GhostServer server;
   final void Function() update;
