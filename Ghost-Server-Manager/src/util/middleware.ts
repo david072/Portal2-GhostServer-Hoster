@@ -9,11 +9,14 @@ const docker = new Docker();
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
 	logger.info({ source: "authMiddleware", message: `Validating request to ${req.url}` });
 
-	const authToken = req.cookies["authToken"];
+	let authToken = req.cookies["authToken"];
 	if (!authToken) {
-		logger.info({ source: "authMiddleware", message: "Validation failed! authToken not given" });
-		res.status(401).send();
-		return;
+		authToken = req.header("Authorization")?.substring("Bearer ".length);
+		if (!authToken) {
+			logger.info({ source: "authMiddleware", message: "Validation failed! authToken not given" });
+			res.status(401).send();
+			return;
+		}
 	}
 
 	await authOpenDatabase();
