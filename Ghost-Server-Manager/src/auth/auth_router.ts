@@ -6,6 +6,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { sendMailHtml } from "../util/mailer";
 import { deleteAllContainersFromUser } from "../api/docker_helper";
+import { addDays } from "date-fns";
 
 export const router = express.Router();
 
@@ -68,6 +69,35 @@ router.post("/generateAuthToken", async (req, res) => {
 	logger.info({ source: "generateAuthToken", message: "Success!" });
 
 	res.cookie('authToken', authToken, { maxAge: 7 * 24 * 60 * 60, httpOnly: true, secure: true, sameSite: "lax" }).sendStatus(200);
+});
+
+router.post("/generateAuthToken2", async (req, res) => {
+	logger.info({ source: "generateAuthToken2", message: "Route called" });
+
+	if (!("email" in req.body)) {
+		logger.warn({ source: "generateAuthToken2", message: "No email in query. Exiting." });
+		res.status(400).send();
+		return;
+	}
+	else if (!("password" in req.body)) {
+		logger.warn({ source: "generateAuthToken2", message: "No password in query. Exiting." });
+		res.status(400).send();
+		return;
+	}
+
+	const email = req.body.email.toString();
+	const password = req.body.password.toString();
+
+	const authToken = await generateAuthToken(email, password);
+	if (!authToken) {
+		logger.warn({ source: "generateAuthToken2", message: "Fail! User not found." });
+		res.status(404).send();
+		return;
+	}
+
+	logger.info({ source: "generateAuthToken2", message: "Success!" });
+
+	res.status(200).json({ "token": authToken, "expires": addDays(Date.now(), 7).getTime() })
 });
 
 router.get("/user", authMiddleware, (req, res) => {
