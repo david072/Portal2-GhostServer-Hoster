@@ -4,24 +4,22 @@ import * as ghostServer from "./ghost_server_addon";
 import bodyParser from "body-parser";
 
 export class GhostServerSettings {
-    countdownDuration: number;
-    preCountdownCommands: string;
-    postCountdownCommands: string;
-
-    constructor(countdownDuration: number, preCountdownCommands: string, postCountdownCommands: string) {
-        this.countdownDuration = countdownDuration;
-        this.preCountdownCommands = preCountdownCommands;
-        this.postCountdownCommands = postCountdownCommands;
-    }
+    countdownDuration: number = 0;
+    preCountdownCommands: string = "";
+    postCountdownCommands: string = "";
+	acceptingPlayers: boolean = true;
+	acceptingSpectators: boolean = true;
 
     updateFrom(payload: Partial<GhostServerSettings>) {
-        this.countdownDuration = payload.countdownDuration || 1;
-        this.preCountdownCommands = payload.preCountdownCommands || "";
-        this.postCountdownCommands = payload.postCountdownCommands || "";
+        this.countdownDuration = payload.countdownDuration || this.countdownDuration;
+        this.preCountdownCommands = payload.preCountdownCommands || this.preCountdownCommands;
+        this.postCountdownCommands = payload.postCountdownCommands || this.postCountdownCommands;
+		this.acceptingPlayers = payload.acceptingPlayers !== undefined ? payload.acceptingPlayers : this.acceptingPlayers;
+		this.acceptingSpectators = payload.acceptingSpectators !== undefined ? payload.acceptingSpectators : this.acceptingSpectators;
     }
 }
 
-let settings = new GhostServerSettings(1, "", "");
+let settings = new GhostServerSettings();
 
 const app = express();
 app.use(bodyParser.json({ limit: '20mb' }))
@@ -41,6 +39,10 @@ app.get("/settings", (_, res) => { res.status(200).json(settings); });
 
 app.put("/settings", (req, res) => {
 	settings.updateFrom(req.body);
+
+	ghostServer.setAcceptingPlayers(settings.acceptingPlayers);
+	ghostServer.setAcceptingSpectators(settings.acceptingSpectators);
+
 	res.status(200).send("Settings updated!");
 });
 
@@ -91,30 +93,6 @@ app.put("/banPlayer", (req, res) => {
 	}
 
 	res.status(400).send("Please specify either 'id' or 'name'");
-});
-
-app.put("/acceptingPlayers", (req, res) => {
-	let value: boolean | undefined = undefined;
-	if ("value" in req.query) value = req.query.value === "1";
-
-	ghostServer.setAcceptingPlayers(value);
-	res.status(200).send(`acceptingPlayers set to ${value || true}`);
-});
-
-app.get("/acceptingPlayers", (_, res) => {
-	res.status(200).json(ghostServer.getAcceptingPlayers());
-});
-
-app.put("/acceptingSpectators", (req, res) => {
-	let value: boolean | undefined = undefined;
-	if ("value" in req.query) value = req.query.value === "1";
-
-	ghostServer.setAcceptingSpectators(value);
-	res.status(200).send(`acceptingPlayers set to ${value || true}`);
-});
-
-app.get("/acceptingSpectators", (_, res) => {
-	res.status(200).json(ghostServer.getAcceptingSpectators());
 });
 
 const port = process.env.PORT || 80;

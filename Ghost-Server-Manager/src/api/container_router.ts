@@ -151,60 +151,6 @@ router.put("/:id/disconnectPlayer", async (req, res) => {
 	res.status(200).send();
 });
 
-router.put("/:id/acceptingPlayers", async (req, res) => {
-	await db.openDatabase();
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	let value: string | undefined = undefined;
-	if ("value" in req.query) value = req.query.value.toString();
-
-	await sendToContainer(container, `/acceptingPlayers?value=${value}`, "PUT");
-	res.status(200).send();
-});
-
-router.get("/:id/acceptingPlayers", async (req, res) => {
-	await db.openDatabase();
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	const response = await sendToContainer(container, "/acceptingPlayers", "GET");
-	res.status(200).json(response.data);
-});
-
-router.put("/:id/acceptingSpectators", async (req, res) => {
-	await db.openDatabase();
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	let value: string | undefined = undefined;
-	if ("value" in req.query) value = req.query.value.toString();
-
-	await sendToContainer(container, `/acceptingSpectators?value=${value}`, "PUT");
-	res.status(200).send();
-});
-
-router.get("/:id/acceptingSpectators", async (req, res) => {
-	await db.openDatabase();
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	const response = await sendToContainer(container, "/acceptingSpectators", "GET");
-	res.status(200).json(response.data);
-});
-
 function sendToContainer(container: db.Container, route: string, method: Method, data: any = undefined) {
 	return axios({
 		url: `http://localhost:${container.port}${route}`,
