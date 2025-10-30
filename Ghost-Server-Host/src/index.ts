@@ -1,12 +1,30 @@
 import express from "express";
 import { exit } from "process";
 import * as ghostServer from "./ghost_server_addon";
+import bodyParser from "body-parser";
+
+export class GhostServerSettings {
+    countdownDuration: number;
+    preCountdownCommands: string;
+    postCountdownCommands: string;
+
+    constructor(countdownDuration: number, preCountdownCommands: string, postCountdownCommands: string) {
+        this.countdownDuration = countdownDuration;
+        this.preCountdownCommands = preCountdownCommands;
+        this.postCountdownCommands = postCountdownCommands;
+    }
+
+    updateFrom(payload: Partial<GhostServerSettings>) {
+        this.countdownDuration = payload.countdownDuration || 1;
+        this.preCountdownCommands = payload.preCountdownCommands || "";
+        this.postCountdownCommands = payload.postCountdownCommands || "";
+    }
+}
+
+let settings = new GhostServerSettings(1, "", "");
 
 const app = express();
-
-let preCountdownCommands: string = "";
-let postCountdownCommands: string = "";
-let countdownDuration: number = 1;
+app.use(bodyParser.json({ limit: '20mb' }))
 
 app.get("/startServer", (_, res) => {
 	ghostServer.startServer(+process.env.WS_PORT);
@@ -19,23 +37,15 @@ app.get("/stopServer", (_, res) => {
 	exit();
 });
 
-app.get("/settings", (_, res) => {
-	res.status(200).json({
-		preCommands: preCountdownCommands,
-		postCommands: postCountdownCommands,
-		duration: countdownDuration
-	});
-});
+app.get("/settings", (_, res) => { res.status(200).json(settings); });
 
 app.put("/settings", (req, res) => {
-	if ("preCommands" in req.query) preCountdownCommands = req.query.preCommands.toString();
-	if ("postCommands" in req.query) postCountdownCommands = req.query.postCommands.toString();
-	if ("duration" in req.query) countdownDuration = +req.query.duration;
+	settings.updateFrom(req.body);
 	res.status(200).send("Settings updated!");
 });
 
 app.put("/startCountdown", (_, res) => {
-	ghostServer.startCountdown(preCountdownCommands, postCountdownCommands, countdownDuration);
+	ghostServer.startCountdown(settings.preCountdownCommands, settings.postCountdownCommands, settings.countdownDuration);
 	res.status(200).send("Countdown started");
 });
 

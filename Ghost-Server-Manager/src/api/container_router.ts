@@ -42,8 +42,7 @@ router.put("/:id/settings", async (req, res) => {
 		return;
 	}
 
-	let query = `preCommands=${req.query.preCommands || ""}&postCommands=${req.query.postCommands || ""}&duration=${req.query.duration || ""}`;
-	await sendToContainer(container, `/settings?${query}`, "PUT");
+	await sendToContainer(container, "/settings", "PUT", req.body);
 	res.status(200).send();
 });
 
@@ -206,10 +205,12 @@ router.get("/:id/acceptingSpectators", async (req, res) => {
 	res.status(200).json(response.data);
 });
 
-function sendToContainer(container: db.Container, route: string, method: Method) {
+function sendToContainer(container: db.Container, route: string, method: Method, data: any = undefined) {
 	return axios({
 		url: `http://localhost:${container.port}${route}`,
-		method: method
+		method: method,
+		headers: { "Content-Type": "application/json" },
+		data: data,
 	});
 }
 
