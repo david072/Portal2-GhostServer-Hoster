@@ -60,6 +60,17 @@ class _HomePageState extends State<HomePage> {
     setState(() => loading = false);
   }
 
+  Future<void> logout() async {
+    setState(() => loading = true);
+
+    var sp = await SharedPreferences.getInstance();
+    sp.remove(spAuthTokenKey);
+    sp.remove(spAuthTokenExpiryKey);
+
+    if (!mounted) return;
+    context.go("/login");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,6 +79,7 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         actions: [
           IconButton(onPressed: setup, icon: const Icon(Icons.refresh)),
+          IconButton(onPressed: logout, icon: const Icon(Icons.logout)),
         ],
       ),
       body: Padding(
