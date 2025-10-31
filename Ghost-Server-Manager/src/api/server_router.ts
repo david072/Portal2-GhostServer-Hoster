@@ -10,7 +10,6 @@ const MAX_NUMBER_OF_GHOST_SERVERS = 10;
 
 export const router = express.Router();
 
-// Require authentication for all sub-routes => Valid account and owning the requested container
 router.use(authMiddleware);
 
 router.post("/create", async (req, res) => {
@@ -57,7 +56,6 @@ router.get("/list", async (req, res) => {
 	const containers = await db.getContainersForUser(req.body.user.id);
 	res.status(200).json(containers);
 });
-
 
 router.get("/:id", async (req, res) => {
 	await db.openDatabase();

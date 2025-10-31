@@ -15,7 +15,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool loading = true;
 
+  late User currentUser;
   List<GhostServer> servers = [];
+
+  bool showAllServers = false;
 
   @override
   void initState() {
@@ -51,7 +54,8 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    servers = await Backend.getGhostServers();
+    currentUser = await Backend.getCurrentUser();
+    servers = await Backend.getGhostServers(showAll: showAllServers);
 
     setState(() => loading = false);
   }
@@ -72,11 +76,32 @@ class _HomePageState extends State<HomePage> {
             ? Center(
                 child: SizedBox(
                   width: MediaQuery.sizeOf(context).width / 2,
-                  child: servers.isNotEmpty ? ListView.builder(
-                    itemCount: servers.length,
-                    itemBuilder: (context, i) =>
-                        _GhostServerCard(server: servers[i], update: setup),
-                  ) : const Center(child: Text("Nothing to show")),
+                  child: Column(
+                    children: [
+                      if (currentUser.role == Role.admin) ...[
+                        SwitchListTile(
+                          value: showAllServers,
+                          onChanged: (b) {
+                            setState(() => showAllServers = b);
+                            setup();
+                          },
+                          title: const Text("Show All"),
+                        ),
+                        const Divider(height: 20),
+                      ],
+                      servers.isNotEmpty
+                          ? ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: servers.length,
+                              itemBuilder: (context, i) => _GhostServerCard(
+                                server: servers[i],
+                                currentUser: currentUser,
+                                update: setup,
+                              ),
+                            )
+                          : const Center(child: Text("Nothing to show")),
+                    ],
+                  ),
                 ),
               )
             : const Center(child: CircularProgressIndicator()),
@@ -100,71 +125,81 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _GhostServerCard extends StatelessWidget {
-  const _GhostServerCard({required this.server, required this.update});
+  const _GhostServerCard({
+    required this.server,
+    required this.currentUser,
+    required this.update,
+  });
 
   final GhostServer server;
+  final User currentUser;
   final void Function() update;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      server.name,
-                      style: Theme.of(context).textTheme.headlineSmall,
+    var content = Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    server.name,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  Text(
+                    "Expires ${server.relativeRemainingDuration}"
+                    "${server.userId != currentUser.id ? " • Admin visible" : ""}",
+                    style: TextStyle(color: Theme.of(context).hintColor),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => DeleteGhostServerDialog(
+                      server: server,
+                      update: update,
                     ),
-                    Text(
-                      "Expires ${server.relativeRemainingDuration}",
-                      style: TextStyle(color: Theme.of(context).hintColor),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => DeleteGhostServerDialog(
-                        server: server,
-                        update: update,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.delete_outlined),
-                ),
-              ],
-            ),
-            const Divider(height: 20),
-            Text("Connecting:", style: Theme.of(context).textTheme.bodyLarge),
-            Text(
-              "To connect, paste the text below into your game's console and hit enter!",
-            ),
-            const SizedBox(height: 20),
-            GhostServerConnectCommandField(command: server.connectCommand()),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FilledButton.tonal(
-                  onPressed: () => context.go("/webinterface/${server.id}"),
-                  child: const Text("Webinterface"),
-                ),
-              ],
-            ),
-          ],
-        ),
+                  );
+                },
+                icon: const Icon(Icons.delete_outlined),
+              ),
+            ],
+          ),
+          const Divider(height: 20),
+          Text("Connecting:", style: Theme.of(context).textTheme.bodyLarge),
+          Text(
+            "To connect, paste the text below into your game's console and hit enter!",
+          ),
+          const SizedBox(height: 20),
+          GhostServerConnectCommandField(command: server.connectCommand()),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FilledButton.tonal(
+                onPressed: () => context.go("/webinterface/${server.id}"),
+                child: const Text("Webinterface"),
+              ),
+            ],
+          ),
+        ],
       ),
     );
+
+    if (server.userId == currentUser.id) {
+      return Card(child: content);
+    } else {
+      return Card.outlined(child: content);
+    }
   }
 }
 

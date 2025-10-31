@@ -22,7 +22,7 @@ app.use("/api/server", serverRouter);
 // We need to serve the Flutter app as a Single Page App which handles its own routing.
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/build/web/index.html"));
-})
+});
 
 init();
 

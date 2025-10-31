@@ -17,6 +17,20 @@ const _baseServerUri = "$_baseUri/api/server";
 
 typedef Json = Map<String, dynamic>;
 
+@JsonEnum()
+enum Role { user, admin }
+
+@freezed
+abstract class User with _$User {
+  const factory User({
+    required int id,
+    required String email,
+    required Role role,
+  }) = _User;
+
+  factory User.fromJson(Json json) => _$UserFromJson(json);
+}
+
 @freezed
 abstract class GhostServer with _$GhostServer {
   const GhostServer._();
@@ -139,13 +153,22 @@ class _Backend {
     if (response.statusCode != 201) throw response.body;
   }
 
+  Future<User> getCurrentUser() async {
+    var response = await _get("$_baseAuthUri/user", authenticated: true);
+    if (response.statusCode != 200) throw response.body;
+    return User.fromJson(jsonDecode(response.body));
+  }
+
   Future<void> createGhostServer(String? name) => _postJson(
     "$_baseServerUri/create${name != null ? "?name=$name" : ""}",
     authenticated: true,
   );
 
-  Future<List<GhostServer>> getGhostServers() async {
-    var response = await _get("$_baseServerUri/list", authenticated: true);
+  Future<List<GhostServer>> getGhostServers({bool showAll = false}) async {
+    var response = await _get(
+      "$_baseServerUri/list?showAll=${showAll ? "1" : "0"}",
+      authenticated: true,
+    );
     if (response.statusCode != 200) throw response.body;
     var json = jsonDecode(response.body) as List<dynamic>;
     return json.cast<Json>().map(GhostServer.fromJson).toList();
