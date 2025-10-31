@@ -4,7 +4,7 @@
   "description": "",
   "main": "out/index.js",
   "scripts": {
-    "start": "tsc && node out/index.js"
+    "start": "cd frontend && flutter build web --release && cd .. && tsc && node out/index.js"
   },
   "keywords": [],
   "author": "",

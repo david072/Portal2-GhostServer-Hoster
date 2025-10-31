@@ -120,7 +120,7 @@ class _Backend {
 
   Future<(String, DateTime)> login(String email, String password) async {
     var response = await _postJson(
-      "$_baseAuthUri/generateAuthToken2",
+      "$_baseAuthUri/login",
       body: {"email": email, "password": password},
     );
     if (response.statusCode != 200) throw response.body;
@@ -205,7 +205,7 @@ class _Backend {
   );
 
   Future<void> deleteGhostServer(int id) =>
-      _delete("$_baseServerUri/$id/delete", authenticated: true);
+      _delete("$_baseServerUri/$id", authenticated: true);
 }
 
 // ignore: constant_identifier_names

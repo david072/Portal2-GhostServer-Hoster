@@ -11,13 +11,18 @@ const app = express();
 
 app.use(cors());
 
-app.use(express.static(path.join(__dirname, '../web')));
+app.use(express.static(path.join(__dirname, '../frontend/build/web')));
 
 app.use(cookieParser());
 app.use(bodyParser.json({ limit: '20mb' }))
 
 app.use("/api/auth", authRouter);
 app.use("/api/server", serverRouter);
+
+// We need to serve the Flutter app as a Single Page App which handles its own routing.
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/build/web/index.html"));
+})
 
 init();
 
