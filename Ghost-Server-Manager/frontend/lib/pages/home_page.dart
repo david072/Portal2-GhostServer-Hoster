@@ -72,11 +72,11 @@ class _HomePageState extends State<HomePage> {
             ? Center(
                 child: SizedBox(
                   width: MediaQuery.sizeOf(context).width / 2,
-                  child: ListView.builder(
+                  child: servers.isNotEmpty ? ListView.builder(
                     itemCount: servers.length,
                     itemBuilder: (context, i) =>
                         _GhostServerCard(server: servers[i], update: setup),
-                  ),
+                  ) : const Center(child: Text("Nothing to show")),
                 ),
               )
             : const Center(child: CircularProgressIndicator()),
