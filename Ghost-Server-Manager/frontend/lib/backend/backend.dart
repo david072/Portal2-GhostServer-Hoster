@@ -40,9 +40,11 @@ abstract class GhostServer with _$GhostServer {
 @freezed
 abstract class GhostServerSettings with _$GhostServerSettings {
   const factory GhostServerSettings({
-    required String preCommands,
-    required String postCommands,
-    required int duration,
+    required String preCountdownCommands,
+    required String postCountdownCommands,
+    required int countdownDuration,
+    required bool acceptingPlayers,
+    required bool acceptingSpectators,
   }) = _GhostServerSettings;
 
   factory GhostServerSettings.fromJson(Json json) =>
@@ -69,7 +71,7 @@ class _Backend {
 
   Future<http.Response> _postJson(
     String uri, {
-    Json json = const {},
+    Json body = const {},
     bool authenticated = false,
   }) async => http.post(
     Uri.parse(uri),
@@ -78,18 +80,21 @@ class _Backend {
       if (authenticated)
         HttpHeaders.authorizationHeader: "Bearer ${await _getAuthToken()}",
     },
-    body: jsonEncode(json),
+    body: jsonEncode(body),
   );
 
   Future<http.Response> _put(
     String uri, {
+    Json body = const {},
     bool authenticated = false,
   }) async => http.put(
     Uri.parse(uri),
     headers: {
+      HttpHeaders.contentTypeHeader: "application/json",
       if (authenticated)
         HttpHeaders.authorizationHeader: "Bearer ${await _getAuthToken()}",
     },
+    body: jsonEncode(body),
   );
 
   Future<http.Response> _get(
@@ -106,7 +111,7 @@ class _Backend {
   Future<(String, DateTime)> login(String email, String password) async {
     var response = await _postJson(
       "$_baseAuthUri/generateAuthToken2",
-      json: {"email": email, "password": password},
+      body: {"email": email, "password": password},
     );
     if (response.statusCode != 200) throw response.body;
     var json = jsonDecode(response.body);
@@ -119,7 +124,7 @@ class _Backend {
   Future<void> register(String email, String password) async {
     var response = await _postJson(
       "$_baseAuthUri/register",
-      json: {"email": email, "password": password},
+      body: {"email": email, "password": password},
     );
     if (response.statusCode != 201) throw response.body;
   }
@@ -137,17 +142,14 @@ class _Backend {
   }
 
   Future<GhostServer> getGhostServerById(int id) async {
-    var response = await _get(
-      "$_baseApiUri/validateContainerId?id=$id",
-      authenticated: true,
-    );
+    var response = await _get("$_baseContainerUri/$id", authenticated: true);
     if (response.statusCode != 200) throw response.body;
     return GhostServer.fromJson(jsonDecode(response.body));
   }
 
   Future<GhostServerSettings> getGhostServerSettingsById(int id) async {
     var response = await _get(
-      "$_baseContainerUri/settings?id=$id",
+      "$_baseContainerUri/$id/settings",
       authenticated: true,
     );
     if (response.statusCode != 200) throw response.body;
@@ -158,47 +160,22 @@ class _Backend {
     int id,
     GhostServerSettings settings,
   ) => _put(
-    "$_baseContainerUri/settings?id=$id&duration=${settings.duration}&preCommands=${settings.preCommands}&postCommands=${settings.postCommands}",
+    "$_baseContainerUri/$id/settings",
+    body: settings.toJson(),
     authenticated: true,
   );
 
   Future<void> sendServerMessage(int id, String message) => _put(
-    "$_baseContainerUri/serverMessage?id=$id&message=$message",
+    "$_baseContainerUri/$id/serverMessage?message=$message",
     authenticated: true,
   );
 
   Future<void> startCountdown(int id) =>
-      _put("$_baseContainerUri/startCountdown?id=$id", authenticated: true);
-
-  Future<bool> getAcceptingPlayers(int id) async {
-    var response = await _get(
-      "$_baseContainerUri/acceptingPlayers?id=$id",
-      authenticated: true,
-    );
-    return response.body == "true";
-  }
-
-  Future<void> setAcceptingPlayers(int id, bool accept) => _put(
-    "$_baseContainerUri/acceptingPlayers?id=$id&value=${accept ? "1" : "0"}",
-    authenticated: true,
-  );
-
-  Future<bool> getAcceptingSpectators(int id) async {
-    var response = await _get(
-      "$_baseContainerUri/acceptingSpectators?id=$id",
-      authenticated: true,
-    );
-    return response.body == "true";
-  }
-
-  Future<void> setAcceptingSpectators(int id, bool accept) => _put(
-    "$_baseContainerUri/acceptingSpectators?id=$id&value=${accept ? "1" : "0"}",
-    authenticated: true,
-  );
+      _put("$_baseContainerUri/$id/startCountdown", authenticated: true);
 
   Future<List<Player>> getPlayers(int id) async {
     var response = await _get(
-      "$_baseContainerUri/listPlayers?id=$id",
+      "$_baseContainerUri/$id/listPlayers",
       authenticated: true,
     );
     var resp = jsonDecode(response.body) as List<dynamic>;
@@ -206,17 +183,19 @@ class _Backend {
   }
 
   Future<void> disconnectPlayerById(int serverId, int playerId) => _put(
-    "$_baseContainerUri/disconnectPlayer?id=$serverId&player_id=$playerId",
+    "$_baseContainerUri/$serverId/disconnectPlayer",
+    body: {"id": playerId},
     authenticated: true,
   );
 
   Future<void> banPlayerById(int serverId, int playerId) => _put(
-    "$_baseContainerUri/banPlayer?id=$serverId&player_id=$playerId",
+    "$_baseContainerUri/$serverId/banPlayer",
+    body: {"id": playerId},
     authenticated: true,
   );
 
   Future<void> deleteGhostServer(int id) =>
-      _get("$_baseApiUri/delete?id=$id", authenticated: true);
+      _get("$_baseApiUri/$id/delete", authenticated: true);
 }
 
 // ignore: constant_identifier_names

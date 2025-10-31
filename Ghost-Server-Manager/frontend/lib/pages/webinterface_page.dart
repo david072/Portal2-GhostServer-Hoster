@@ -17,8 +17,6 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
 
   GhostServer? server;
   GhostServerSettings? settings;
-  bool acceptingPlayers = true;
-  bool acceptingSpectators = true;
   List<Player> players = [];
 
   int navigationRailSelectedIndex = 0;
@@ -34,10 +32,15 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
 
     server = await Backend.getGhostServerById(widget.serverId);
     settings = await Backend.getGhostServerSettingsById(widget.serverId);
-    acceptingPlayers = await Backend.getAcceptingPlayers(widget.serverId);
-    acceptingSpectators = await Backend.getAcceptingSpectators(widget.serverId);
     players = await Backend.getPlayers(widget.serverId);
 
+    setState(() => loading = false);
+  }
+
+  Future<void> updateSettings(GhostServerSettings settings) async {
+    setState(() => loading = true);
+    await Backend.updateGhostServerSettings(widget.serverId, settings);
+    setState(() => this.settings = settings);
     setState(() => loading = false);
   }
 
@@ -102,8 +105,6 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
                           child: switch (navigationRailSelectedIndex) {
                             1 => _PlayersTab(
                               serverId: widget.serverId,
-                              acceptingPlayers: acceptingPlayers,
-                              acceptingSpectators: acceptingSpectators,
                               players: players,
                               update: setup,
                             ),
@@ -111,6 +112,7 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
                               serverId: widget.serverId,
                               server: server!,
                               settings: settings!,
+                              updateSettings: updateSettings,
                             ),
                           },
                         ),
@@ -141,11 +143,13 @@ class _GeneralTab extends StatelessWidget {
     required this.serverId,
     required this.server,
     required this.settings,
+    required this.updateSettings,
   });
 
   final int serverId;
   final GhostServer server;
   final GhostServerSettings settings;
+  final void Function(GhostServerSettings settings) updateSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -167,6 +171,7 @@ class _GeneralTab extends StatelessWidget {
         _SettingsSection(
           serverId: serverId,
           settings: settings,
+          updateSettings: updateSettings,
         ),
         const SizedBox(height: 80),
         Text(
@@ -183,15 +188,11 @@ class _GeneralTab extends StatelessWidget {
 class _PlayersTab extends StatefulWidget {
   const _PlayersTab({
     required this.serverId,
-    required this.acceptingPlayers,
-    required this.acceptingSpectators,
     required this.players,
     required this.update,
   });
 
   final int serverId;
-  final bool acceptingPlayers;
-  final bool acceptingSpectators;
   final List<Player> players;
 
   final void Function() update;
@@ -201,21 +202,6 @@ class _PlayersTab extends StatefulWidget {
 }
 
 class _PlayersTabState extends State<_PlayersTab> {
-  bool acceptingPlayers = true;
-  bool acceptingSpectators = true;
-
-  @override
-  void initState() {
-    super.initState();
-    acceptingPlayers = widget.acceptingPlayers;
-    acceptingSpectators = widget.acceptingSpectators;
-  }
-
-  Future<void> updateAcceptingSettings() async {
-    await Backend.setAcceptingPlayers(widget.serverId, acceptingPlayers);
-    await Backend.setAcceptingSpectators(widget.serverId, acceptingSpectators);
-  }
-
   Future<bool> showConfirmationDialog(
     String title,
     String content,
@@ -245,25 +231,6 @@ class _PlayersTabState extends State<_PlayersTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SwitchListTile(
-          value: acceptingPlayers,
-          title: const Text("Accept Players"),
-          onChanged: (v) {
-            acceptingPlayers = v;
-            updateAcceptingSettings();
-            setState(() {});
-          },
-        ),
-        SwitchListTile(
-          value: acceptingSpectators,
-          title: const Text("Accept Spectators"),
-          onChanged: (v) {
-            acceptingSpectators = v;
-            updateAcceptingSettings();
-            setState(() {});
-          },
-        ),
-        const SizedBox(height: 20),
         Text(
           "ConnectedPlayers",
           style: Theme.of(context).textTheme.headlineSmall,
@@ -338,10 +305,15 @@ class _PlayersTabState extends State<_PlayersTab> {
 }
 
 class _SettingsSection extends StatefulWidget {
-  const _SettingsSection({required this.serverId, required this.settings});
+  const _SettingsSection({
+    required this.serverId,
+    required this.settings,
+    required this.updateSettings,
+  });
 
   final int serverId;
   final GhostServerSettings settings;
+  final void Function(GhostServerSettings settings) updateSettings;
 
   @override
   State<_SettingsSection> createState() => _SettingsSectionState();
@@ -354,29 +326,31 @@ class _SettingsSectionState extends State<_SettingsSection> {
   final preCommandsController = TextEditingController();
   final postCommandsController = TextEditingController();
 
+  bool acceptingPlayers = true;
+  bool acceptingSpectators = true;
+
   @override
   void initState() {
     super.initState();
-    countdownDurationController.text = "${widget.settings.duration}";
-    preCommandsController.text = widget.settings.preCommands;
-    postCommandsController.text = widget.settings.postCommands;
+    countdownDurationController.text = "${widget.settings.countdownDuration}";
+    preCommandsController.text = widget.settings.preCountdownCommands;
+    postCommandsController.text = widget.settings.postCountdownCommands;
+
+    acceptingPlayers = widget.settings.acceptingPlayers;
+    acceptingSpectators = widget.settings.acceptingSpectators;
   }
 
   Future<void> saveSettings() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
 
-    await Backend.updateGhostServerSettings(
-      widget.serverId,
-      GhostServerSettings(
-        preCommands: preCommandsController.text.trim(),
-        postCommands: postCommandsController.text.trim(),
-        duration: int.parse(countdownDurationController.text),
+    widget.updateSettings(
+      widget.settings.copyWith(
+        preCountdownCommands: preCommandsController.text.trim(),
+        postCountdownCommands: postCommandsController.text.trim(),
+        countdownDuration: int.parse(countdownDurationController.text),
+        acceptingPlayers: acceptingPlayers,
+        acceptingSpectators: acceptingSpectators,
       ),
-    );
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: const Text("Settings updated!")),
     );
   }
 
@@ -389,27 +363,44 @@ class _SettingsSectionState extends State<_SettingsSection> {
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: 200,
-            child: TextFormField(
-              controller: countdownDurationController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
-                labelText: "Countdown Duration",
-                suffixText: "s",
-              ),
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              validator: (s) {
-                if (s == null || s.isEmpty) {
-                  return "Please provide the countdown duration.";
-                }
-                var d = int.tryParse(s);
-                if (d == null || d < 1) {
-                  return "Please provide an integer greater than 0.";
-                }
-                return null;
-              },
+            width: 300,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchListTile(
+                  value: acceptingPlayers,
+                  title: const Text("Accept Players"),
+                  onChanged: (v) => setState(() => acceptingPlayers = v),
+                ),
+                SwitchListTile(
+                  value: acceptingSpectators,
+                  title: const Text("Accept Spectators"),
+                  onChanged: (v) => setState(() => acceptingSpectators = v),
+                ),
+                const SizedBox(height: 40),
+                TextFormField(
+                  controller: countdownDurationController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    alignLabelWithHint: true,
+                    labelText: "Countdown Duration",
+                    suffixText: "s",
+                  ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (s) {
+                    if (s == null || s.isEmpty) {
+                      return "Please provide the countdown duration.";
+                    }
+                    var d = int.tryParse(s);
+                    if (d == null || d < 1) {
+                      return "Please provide an integer greater than 0.";
+                    }
+                    return null;
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
@@ -442,7 +433,7 @@ class _SettingsSectionState extends State<_SettingsSection> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 40),
           FilledButton.icon(
             onPressed: saveSettings,
             icon: const Icon(Icons.save_outlined),
