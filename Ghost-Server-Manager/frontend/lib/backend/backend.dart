@@ -198,13 +198,13 @@ class _Backend {
     authenticated: true,
   );
 
-  Future<void> sendServerMessage(int id, String message) => _put(
+  Future<void> sendServerMessage(int id, String message) => _postJson(
     "$_baseServerUri/$id/serverMessage?message=$message",
     authenticated: true,
   );
 
   Future<void> startCountdown(int id) =>
-      _put("$_baseServerUri/$id/startCountdown", authenticated: true);
+      _postJson("$_baseServerUri/$id/startCountdown", authenticated: true);
 
   Future<List<Player>> getPlayers(int id) async {
     var response = await _get(
