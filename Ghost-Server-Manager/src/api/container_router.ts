@@ -10,6 +10,17 @@ export const router = express.Router();
 // Require authentication for all sub-routes => Valid account and owning the requested container
 router.use(authMiddleware);
 
+router.get("/:id", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	res.status(200).json(container);
+});
+
 router.get("/:id/listPlayers", async (req, res) => {
 	await db.openDatabase();
 	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
@@ -42,6 +53,7 @@ router.put("/:id/settings", async (req, res) => {
 		return;
 	}
 
+	delete req.body.user;
 	await sendToContainer(container, "/settings", "PUT", req.body);
 	res.status(200).send();
 });
@@ -85,24 +97,7 @@ router.put("/:id/banPlayer", async (req, res) => {
 		return;
 	}
 
-	let idToBan: number | undefined;
-	let nameToBan: string | undefined;
-
-	if ("player_id" in req.query) {
-		idToBan = +req.query.player_id.toString();
-		logger.info({ source: "banPlayer", message: `Banning player by id (${idToBan})` });
-	}
-	else if ("name" in req.query) {
-		nameToBan = req.query.name.toString();
-		logger.info({ source: "banPlayer", message: `Banning player by name (${nameToBan})` });
-	}
-	else {
-		logger.info({ source: "banPlayer", message: "No player information in query. Exiting..." });
-		res.status(400).send();
-		return;
-	}
-
-	const response = await sendToContainer(container, `/banPlayer?${idToBan !== undefined ? `id=${idToBan}` : `name=${nameToBan}`}`, "PUT");
+	const response = await sendToContainer(container, "/banPlayer", "PUT", req.body);
 	if (response.status !== 200) {
 		logger.error({ source: "Container: banPlayer", message: "Banning player failed!" });
 		res.status(response.status).send(response.data);
@@ -123,31 +118,14 @@ router.put("/:id/disconnectPlayer", async (req, res) => {
 		return;
 	}
 
-	let idToDisconnect: number | undefined;
-	let nameToDisconnect: string | undefined;
-
-	if ("player_id" in req.query) {
-		idToDisconnect = +req.query.player_id.toString();
-		logger.info({ source: "disconnectPlayer", message: `Disconnecting player by id (${idToDisconnect})` });
-	}
-	else if ("name" in req.query) {
-		nameToDisconnect = req.query.name.toString();
-		logger.info({ source: "disconnectPlayer", message: `Disconnecting player by name (${nameToDisconnect})` });
-	}
-	else {
-		logger.info({ source: "disconnectPlayer", message: "No player information in query. Exiting..." });
-		res.status(400).send();
-		return;
-	}
-
-	const response = await sendToContainer(container, `/disconnectPlayer?${idToDisconnect !== undefined ? `id=${idToDisconnect}` : `name=${nameToDisconnect}`}`, "PUT");
+	const response = await sendToContainer(container, "/disconnectPlayer", "PUT", req.body);
 	if (response.status !== 200) {
-		logger.error({ source: "Container: disconnectPlayer", message: "Disconnecting player failed!" });
+		logger.error({ source: "disconnectPlayer", message: "Disconnecting player failed!" });
 		res.status(response.status).send(response.data);
 		return;
 	}
 
-	logger.info({ source: "Container: disconnectPlayer", message: "Successfully disconnected the player" });
+	logger.info({ source: "disconnectPlayer", message: "Successfully disconnected the player" });
 	res.status(200).send();
 });
 

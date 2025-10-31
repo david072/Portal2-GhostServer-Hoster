@@ -4,7 +4,7 @@ import * as ghostServer from "./ghost_server_addon";
 import bodyParser from "body-parser";
 
 export class GhostServerSettings {
-    countdownDuration: number = 0;
+    countdownDuration: number = 1;
     preCountdownCommands: string = "";
     postCountdownCommands: string = "";
 	acceptingPlayers: boolean = true;
@@ -66,14 +66,14 @@ app.get("/listPlayers", (_, res) => {
 });
 
 app.put("/disconnectPlayer", (req, res) => {
-	if ("id" in req.query) {
-		ghostServer.disconnectId(+req.query.id);
-		res.status(200).send(`Player with id ${req.query.id} disconnected!`);
+	if ("id" in req.body) {
+		ghostServer.disconnectId(+req.body.id);
+		res.status(200).send(`Player with id ${req.body.id} disconnected!`);
 		return;
 	}
-	else if ("name" in req.query) {
-		ghostServer.disconnect(req.query.name.toString());
-		res.status(200).send(`Player with name ${req.query.name} disconnected!`);
+	else if ("name" in req.body) {
+		ghostServer.disconnect(req.body.name.toString());
+		res.status(200).send(`Player with name ${req.body.name} disconnected!`);
 		return;
 	}
 
@@ -81,14 +81,14 @@ app.put("/disconnectPlayer", (req, res) => {
 });
 
 app.put("/banPlayer", (req, res) => {
-	if ("id" in req.query) {
-		ghostServer.banId(+req.query.id);
-		res.status(200).send(`Player with id ${req.query.id} banned!`);
+	if ("id" in req.body) {
+		ghostServer.banId(+req.body.id);
+		res.status(200).send(`Player with id ${req.body.id} banned!`);
 		return;
 	}
-	else if ("name" in req.query) {
-		ghostServer.ban(req.query.name.toString());
-		res.status(200).send(`Player with name ${req.query.name} banned!`);
+	else if ("name" in req.body) {
+		ghostServer.ban(req.body.name.toString());
+		res.status(200).send(`Player with name ${req.body.name} banned!`);
 		return;
 	}
 

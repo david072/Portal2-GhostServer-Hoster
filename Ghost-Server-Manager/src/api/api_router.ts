@@ -73,17 +73,6 @@ router.get("/delete/:id", async (req, res) => {
 	res.status(200).send();
 });
 
-router.get("/container/:id", async (req, res) => {
-	await db.openDatabase();
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	res.status(200).json(container);
-});
-
 router.use(db.closeDatabase, user_db.closeDatabase);
 
 function randomRangeNotIn(min: number, max: number, numbers: number[]): number | undefined {
