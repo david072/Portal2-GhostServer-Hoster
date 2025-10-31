@@ -35,7 +35,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Register")),
+      appBar: AppBar(title: const Text("Register"), centerTitle: true),
       body: Center(
         child: SizedBox(
           width: MediaQuery.sizeOf(context).width / 3,
