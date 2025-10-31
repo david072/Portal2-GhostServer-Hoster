@@ -6,6 +6,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { sendMailHtml } from "../util/mailer";
 import { deleteAllContainersFromUser } from "../api/docker_helper";
+import * as container_db from "../api/container_db_manager";
 
 export const router = express.Router();
 
@@ -58,18 +59,27 @@ router.post("/login", async (req, res) => {
 	const email = req.body.email.toString();
 	const password = req.body.password.toString();
 
-	const [authToken, expirationDate] = await db.generateAuthToken(email, password);
-	if (!authToken) {
+	const result = await db.generateAuthToken(email, password);
+	if (!result) {
 		logger.warn({ source: "login", message: "User not found." });
 		res.status(404).send("User not found");
 		return;
 	}
 
+	const [authToken, expirationDate] = result;
 	res.status(200).json({ "token": authToken, "expires": expirationDate.getTime() })
 });
 
 router.get("/user", authMiddleware, (req, res) => {
 	res.status(200).json(req.body.user);
+});
+
+router.delete("/user", authMiddleware, async (req, res) => {
+	await container_db.openDatabase();
+	await deleteAllContainersFromUser(req.body.user.id);
+	await db.deleteUser(req.body.user.id);
+
+	res.status(200).send();
 });
 
 router.get("/sendResetPassword", async (req, res) => {
@@ -99,13 +109,6 @@ router.get("/sendResetPassword", async (req, res) => {
 		res.status(500).send();
 		return;
 	}
-
-	res.status(200).send();
-});
-
-router.delete("/delete", authMiddleware, async (req, res) => {
-	await deleteAllContainersFromUser(req.body.user.id);
-	await db.deleteUser(req.body.user.id);
 
 	res.status(200).send();
 });

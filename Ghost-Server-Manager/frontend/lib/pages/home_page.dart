@@ -60,6 +60,20 @@ class _HomePageState extends State<HomePage> {
     setState(() => loading = false);
   }
 
+  Future<void> deleteAccount() async {
+    var shouldDelete =
+        (await showDialog<bool>(
+          context: context,
+          builder: (context) => _DeleteAccountDialog(currentUser: currentUser),
+        )) ??
+        false;
+
+    if (!shouldDelete) return;
+
+    await Backend.deleteAccount();
+    logout();
+  }
+
   Future<void> logout() async {
     setState(() => loading = true);
 
@@ -79,7 +93,16 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         actions: [
           IconButton(onPressed: setup, icon: const Icon(Icons.refresh)),
-          IconButton(onPressed: logout, icon: const Icon(Icons.logout)),
+          PopupMenuButton(
+            icon: const Icon(Icons.account_circle_outlined),
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem(
+                onTap: deleteAccount,
+                child: const Text("Delete Account"),
+              ),
+              PopupMenuItem(onTap: logout, child: const Text("Logout")),
+            ],
+          ),
         ],
       ),
       body: Padding(
@@ -132,6 +155,73 @@ class _HomePageState extends State<HomePage> {
         label: const Text("Create Ghost Server"),
         icon: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog({required this.currentUser});
+
+  final User currentUser;
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final formKey = GlobalKey<FormState>();
+
+  void delete() {
+    if (!(formKey.currentState?.validate() ?? false)) return;
+    Navigator.pop(context, true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Delete Account"),
+      content: Form(
+        key: formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Do you really want to delete your account? This cannot be undone!",
+            ),
+            const Text("Enter your email below to confirm:"),
+            const SizedBox(height: 20),
+            TextFormField(
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                alignLabelWithHint: true,
+                labelText: "Email",
+                hintText: widget.currentUser.email,
+              ),
+              keyboardType: TextInputType.emailAddress,
+              validator: (s) {
+                if (s == null || s.isEmpty) {
+                  return "Please enter your Email-Address.";
+                }
+                if (s != widget.currentUser.email) {
+                  return "Email-Address is incorrect.";
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: delete,
+          child: const Text("Delete"),
+        ),
+      ],
     );
   }
 }
