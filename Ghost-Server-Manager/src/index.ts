@@ -24,6 +24,6 @@ app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/build/web/index.html"));
 });
 
-init();
+init().catch((_) => {});
 
 app.listen(8080, () => { console.log("Server listening on port 8080"); });
