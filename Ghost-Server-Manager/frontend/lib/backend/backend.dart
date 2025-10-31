@@ -12,9 +12,8 @@ part 'backend.g.dart';
 
 const _host = "localhost";
 const _baseUri = "http://$_host:8080";
-const _baseAuthUri = "$_baseUri/auth";
-const _baseApiUri = "$_baseUri/api";
-const _baseContainerUri = "$_baseUri/container";
+const _baseAuthUri = "$_baseUri/api/auth";
+const _baseServerUri = "$_baseUri/api/server";
 
 typedef Json = Map<String, dynamic>;
 
@@ -108,6 +107,17 @@ class _Backend {
     },
   );
 
+  Future<http.Response> _delete(
+    String uri, {
+    bool authenticated = false,
+  }) async => http.delete(
+    Uri.parse(uri),
+    headers: {
+      if (authenticated)
+        HttpHeaders.authorizationHeader: "Bearer ${await _getAuthToken()}",
+    },
+  );
+
   Future<(String, DateTime)> login(String email, String password) async {
     var response = await _postJson(
       "$_baseAuthUri/generateAuthToken2",
@@ -130,26 +140,26 @@ class _Backend {
   }
 
   Future<void> createGhostServer(String? name) => _postJson(
-    "$_baseApiUri/create${name != null ? "?name=$name" : ""}",
+    "$_baseServerUri/create${name != null ? "?name=$name" : ""}",
     authenticated: true,
   );
 
   Future<List<GhostServer>> getGhostServers() async {
-    var response = await _get("$_baseApiUri/list", authenticated: true);
+    var response = await _get("$_baseServerUri/list", authenticated: true);
     if (response.statusCode != 200) throw response.body;
     var json = jsonDecode(response.body) as List<dynamic>;
     return json.cast<Json>().map(GhostServer.fromJson).toList();
   }
 
   Future<GhostServer> getGhostServerById(int id) async {
-    var response = await _get("$_baseContainerUri/$id", authenticated: true);
+    var response = await _get("$_baseServerUri/$id", authenticated: true);
     if (response.statusCode != 200) throw response.body;
     return GhostServer.fromJson(jsonDecode(response.body));
   }
 
   Future<GhostServerSettings> getGhostServerSettingsById(int id) async {
     var response = await _get(
-      "$_baseContainerUri/$id/settings",
+      "$_baseServerUri/$id/settings",
       authenticated: true,
     );
     if (response.statusCode != 200) throw response.body;
@@ -160,22 +170,22 @@ class _Backend {
     int id,
     GhostServerSettings settings,
   ) => _put(
-    "$_baseContainerUri/$id/settings",
+    "$_baseServerUri/$id/settings",
     body: settings.toJson(),
     authenticated: true,
   );
 
   Future<void> sendServerMessage(int id, String message) => _put(
-    "$_baseContainerUri/$id/serverMessage?message=$message",
+    "$_baseServerUri/$id/serverMessage?message=$message",
     authenticated: true,
   );
 
   Future<void> startCountdown(int id) =>
-      _put("$_baseContainerUri/$id/startCountdown", authenticated: true);
+      _put("$_baseServerUri/$id/startCountdown", authenticated: true);
 
   Future<List<Player>> getPlayers(int id) async {
     var response = await _get(
-      "$_baseContainerUri/$id/listPlayers",
+      "$_baseServerUri/$id/listPlayers",
       authenticated: true,
     );
     var resp = jsonDecode(response.body) as List<dynamic>;
@@ -183,19 +193,19 @@ class _Backend {
   }
 
   Future<void> disconnectPlayerById(int serverId, int playerId) => _put(
-    "$_baseContainerUri/$serverId/disconnectPlayer",
+    "$_baseServerUri/$serverId/disconnectPlayer",
     body: {"id": playerId},
     authenticated: true,
   );
 
   Future<void> banPlayerById(int serverId, int playerId) => _put(
-    "$_baseContainerUri/$serverId/banPlayer",
+    "$_baseServerUri/$serverId/banPlayer",
     body: {"id": playerId},
     authenticated: true,
   );
 
   Future<void> deleteGhostServer(int id) =>
-      _get("$_baseApiUri/$id/delete", authenticated: true);
+      _delete("$_baseServerUri/$id/delete", authenticated: true);
 }
 
 // ignore: constant_identifier_names
