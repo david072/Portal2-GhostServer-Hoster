@@ -25,5 +25,6 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 	logger.info({ source: "authMiddleware", message: "Request validated!" });
 
 	req.body.user = user;
+	res.locals.authToken = authToken;
 	next();
 }

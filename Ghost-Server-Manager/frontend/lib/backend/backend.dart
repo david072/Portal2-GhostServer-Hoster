@@ -188,6 +188,9 @@ class _Backend {
   Future<void> deleteAccount() =>
       _delete("$_baseAuthUri/user", authenticated: true);
 
+  Future<void> revokeAuthToken() =>
+      _postJson("$_baseAuthUri/revokeToken", authenticated: true);
+
   Future<void> createGhostServer(String? name) => _postJson(
     "$_baseServerUri/create${name != null ? "?name=$name" : ""}",
     authenticated: true,

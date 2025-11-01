@@ -82,6 +82,11 @@ router.delete("/user", authMiddleware, async (req, res) => {
 	res.status(200).send();
 });
 
+router.post("/revokeToken", authMiddleware, async (req, res) => {
+	await db.deleteAuthToken(res.locals.authToken);
+	res.status(200).send();
+});
+
 router.get("/sendResetPassword", async (req, res) => {
 	if (!("email" in req.query)) {
 		res.status(400).send();

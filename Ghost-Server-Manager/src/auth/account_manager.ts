@@ -134,6 +134,10 @@ export async function deleteUser(id: number) {
 	await db.run("DELETE FROM users WHERE id = ?", [id]);
 }
 
+export async function deleteAuthToken(token: string) {
+	await db.run("DELETE FROM auth_tokens WHERE token = ?", [token]);
+}
+
 export async function generatePasswordResetToken(email: string): Promise<string | undefined> {
 	if (!db) {
 		logger.error({ source: "generatePasswordResetToken - DB", message: "Database not open!" });
