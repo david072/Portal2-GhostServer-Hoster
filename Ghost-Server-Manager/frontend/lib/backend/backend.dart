@@ -75,6 +75,29 @@ abstract class Player with _$Player {
   factory Player.fromJson(Json json) => _$PlayerFromJson(json);
 }
 
+@freezed
+abstract class Whitelist with _$Whitelist {
+  const factory Whitelist({
+    required bool enabled,
+    required List<WhitelistEntry> entries,
+  }) = _Whitelist;
+
+  factory Whitelist.fromJson(Json json) => _$WhitelistFromJson(json);
+}
+
+@JsonEnum()
+enum WhitelistEntryType { name, ip }
+
+@freezed
+abstract class WhitelistEntry with _$WhitelistEntry {
+  const factory WhitelistEntry({
+    required WhitelistEntryType type,
+    required String value,
+  }) = _WhitelistEntry;
+
+  factory WhitelistEntry.fromJson(Json json) => _$WhitelistEntryFromJson(json);
+}
+
 class _Backend {
   const _Backend();
 
@@ -123,13 +146,16 @@ class _Backend {
 
   Future<http.Response> _delete(
     String uri, {
+    Json body = const {},
     bool authenticated = false,
   }) async => http.delete(
     Uri.parse(uri),
     headers: {
+      HttpHeaders.contentTypeHeader: "application/json",
       if (authenticated)
         HttpHeaders.authorizationHeader: "Bearer ${await _getAuthToken()}",
     },
+    body: jsonEncode(body),
   );
 
   Future<(String, DateTime)> login(String email, String password) async {
@@ -229,6 +255,39 @@ class _Backend {
     body: {"id": playerId},
     authenticated: true,
   );
+
+  Future<Whitelist> getWhitelist(int serverId) async {
+    var response = await _get(
+      "$_baseServerUri/$serverId/whitelist",
+      authenticated: true,
+    );
+    return Whitelist.fromJson(jsonDecode(response.body));
+  }
+
+  Future<void> setWhitelistStatus(int serverId, bool enabled) => _put(
+    "$_baseServerUri/$serverId/whitelist/status",
+    body: {"enabled": enabled},
+    authenticated: true,
+  );
+
+  Future<void> addToWhitelist(int serverId, WhitelistEntry entry) => _put(
+    "$_baseServerUri/$serverId/whitelist",
+    body: switch (entry.type) {
+      WhitelistEntryType.name => {"name": entry.value},
+      WhitelistEntryType.ip => {"ip": entry.value},
+    },
+    authenticated: true,
+  );
+
+  Future<void> removeFromWhitelist(int serverId, WhitelistEntry entry) =>
+      _delete(
+        "$_baseServerUri/$serverId/whitelist",
+        body: switch (entry.type) {
+          WhitelistEntryType.name => {"name": entry.value},
+          WhitelistEntryType.ip => {"ip": entry.value},
+        },
+        authenticated: true,
+      );
 
   Future<void> deleteGhostServer(int id) =>
       _delete("$_baseServerUri/$id", authenticated: true);

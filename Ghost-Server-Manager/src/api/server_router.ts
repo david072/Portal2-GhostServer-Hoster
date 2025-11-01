@@ -1,8 +1,8 @@
 import { logger } from "../util/logger";
-import express, { Request } from "express";
+import express, { Request, Response } from "express";
 import { authMiddleware } from "../util/middleware";
 import * as db from "./container_db_manager";
-import axios, { Method } from "axios";
+import axios, { AxiosResponse, Method } from "axios";
 import * as user_db from "../auth/account_manager";
 import * as docker from "./docker_helper";
 
@@ -192,6 +192,34 @@ router.put("/:id/disconnectPlayer", async (req, res) => {
 	logger.info({ source: "disconnectPlayer", message: "Successfully disconnected the player" });
 	res.status(200).send();
 });
+
+router.get("/:id/whitelist", async (req, res) => {
+	await passthroughToContainer(req, res, "/whitelist", "GET");
+});
+
+router.put("/:id/whitelist/status", async (req, res) => {
+	await passthroughToContainer(req, res, "/whitelist/status", "PUT");
+});
+
+router.put("/:id/whitelist", async (req, res) => {
+	await passthroughToContainer(req, res, "/whitelist", "PUT");
+});
+
+router.delete("/:id/whitelist", async (req, res) => {
+	await passthroughToContainer(req, res, "/whitelist", "DELETE");
+});
+
+async function passthroughToContainer(req: Request, res: Response, route: string, method: Method) {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	const response = await sendToContainer(container, route, method, req.body);
+	res.status(response.status).json(response.data);
+}
 
 function sendToContainer(container: db.Container, route: string, method: Method, data: any = undefined) {
 	return axios({

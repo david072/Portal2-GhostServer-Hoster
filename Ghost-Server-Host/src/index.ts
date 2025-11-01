@@ -95,5 +95,49 @@ app.put("/banPlayer", (req, res) => {
 	res.status(400).send("Please specify either 'id' or 'name'");
 });
 
+app.get("/whitelist", (req, res) => {
+	res.status(200).json(ghostServer.getWhitelist());
+});
+
+app.put("/whitelist/status", (req, res) => {
+	if (!("enabled" in req.body)) {
+		res.status(400).send("Please provide enabled key.");
+		return;
+	}
+
+	ghostServer.setWhitelistEnabled(req.body.enabled);
+	res.status(200).send();
+});
+
+app.put("/whitelist", (req, res) => {
+	if ("name" in req.body) {
+		ghostServer.addNameToWhitelist(req.body.name);
+		res.status(200).send(`${req.body.name} added to whitelist!`);
+		return;
+	}
+	else if ("ip" in req.body) {
+		ghostServer.addIpToWhitelist(req.body.ip);
+		res.status(200).send(`${req.body.ip} added to whitelist!`);
+		return;
+	}
+
+	res.status(400).send("Please specify either 'name' or 'ip'");
+});
+
+app.delete("/whitelist", (req, res) => {
+	if ("name" in req.body) {
+		ghostServer.removeNameFromWhitelist(req.body.name);
+		res.status(200).send(`${req.body.name} removed from whitelist!`);
+		return;
+	}
+	else if ("ip" in req.body) {
+		ghostServer.removeIpFromWhitelist(req.body.ip);
+		res.status(200).send(`${req.body.ip} removed from whitelist!`);
+		return;
+	}
+
+	res.status(400).send("Please specify either 'name' or 'ip'");
+});
+
 const port = process.env.PORT || 80;
 app.listen(+port, () => { console.log(`Server listening on port ${port}`); });

@@ -17,7 +17,7 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
   bool loading = true;
 
   GhostServer? server;
-  GhostServerSettings? settings;
+  late GhostServerSettings settings;
   List<Player> players = [];
 
   int navigationRailSelectedIndex = 0;
@@ -100,23 +100,21 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
                     alignment: Alignment.topCenter,
                     child: Padding(
                       padding: const EdgeInsets.all(10),
-                      child: SingleChildScrollView(
-                        child: SizedBox(
-                          width: 2 * MediaQuery.sizeOf(context).width / 3,
-                          child: switch (navigationRailSelectedIndex) {
-                            1 => PlayersTab(
-                              serverId: widget.serverId,
-                              players: players,
-                              update: setup,
-                            ),
-                            _ => _GeneralTab(
-                              serverId: widget.serverId,
-                              server: server!,
-                              settings: settings!,
-                              updateSettings: updateSettings,
-                            ),
-                          },
-                        ),
+                      child: SizedBox(
+                        width: 2 * MediaQuery.sizeOf(context).width / 3,
+                        child: switch (navigationRailSelectedIndex) {
+                          1 => PlayersTab(
+                            serverId: widget.serverId,
+                            players: players,
+                            update: setup,
+                          ),
+                          _ => _GeneralTab(
+                            serverId: widget.serverId,
+                            server: server!,
+                            settings: settings,
+                            updateSettings: updateSettings,
+                          ),
+                        },
                       ),
                     ),
                   ),
@@ -154,34 +152,36 @@ class _GeneralTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Connect",
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        Text(
-          "To connect, paste the text below into your game's console and hit enter!",
-        ),
-        const SizedBox(height: 20),
-        GhostServerConnectCommandField(command: server.connectCommand()),
-        const SizedBox(height: 80),
-        Text("Settings", style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 10),
-        _SettingsSection(
-          serverId: serverId,
-          settings: settings,
-          updateSettings: updateSettings,
-        ),
-        const SizedBox(height: 80),
-        Text(
-          "Server Message",
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 10),
-        _ServerMessageSection(serverId: serverId),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Connect",
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          Text(
+            "To connect, paste the text below into your game's console and hit enter!",
+          ),
+          const SizedBox(height: 20),
+          GhostServerConnectCommandField(command: server.connectCommand()),
+          const SizedBox(height: 80),
+          Text("Settings", style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 10),
+          _SettingsSection(
+            serverId: serverId,
+            settings: settings,
+            updateSettings: updateSettings,
+          ),
+          const SizedBox(height: 80),
+          Text(
+            "Server Message",
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 10),
+          _ServerMessageSection(serverId: serverId),
+        ],
+      ),
     );
   }
 }

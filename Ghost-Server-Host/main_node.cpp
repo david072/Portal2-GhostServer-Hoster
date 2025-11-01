@@ -1,6 +1,7 @@
 #include <node.h>
 #include <string>
 #include <iostream>
+#include <future>
 
 #include "GhostServer/GhostServer/networkmanager.h"
 
@@ -24,6 +25,18 @@ std::string toCppString(v8::Isolate *isolate, v8::MaybeLocal<v8::String> str)
     v8::String::Utf8Value utf8Value(isolate, str.ToLocalChecked());
     return std::string(*utf8Value);
 }
+
+void scheduleServerThreadAndWait(std::function<void()> func) {
+    std::promise<void> promise;
+
+    g_network.ScheduleServerThread([&]() {
+        func();
+        promise.set_value();
+    });
+
+    promise.get_future().wait();
+}
+
 
 NODE_FUNC(startServer)
 {
@@ -200,7 +213,6 @@ NODE_FUNC(setAcceptingPlayers)
             newValue = _newValue->BooleanValue(isolate);
     }
 
-    // fuck vscode for that formatting
     g_network.ScheduleServerThread([=]()
                                    { g_network.acceptingPlayers = newValue; });
 
@@ -222,7 +234,6 @@ NODE_FUNC(setAcceptingSpectators)
             newValue = _newValue->BooleanValue(isolate);
     }
 
-    // fuck vscode for that formatting
     g_network.ScheduleServerThread([=]()
                                    { g_network.acceptingSpectators = newValue; });
 
@@ -232,6 +243,103 @@ NODE_FUNC(setAcceptingSpectators)
 NODE_FUNC(getAcceptingSpectators)
 {
     return v8::Boolean::New(isolate, g_network.acceptingSpectators);
+}
+
+NODE_FUNC(getWhitelist)
+{
+    auto whitelistTempl = v8::ObjectTemplate::New(isolate);
+    whitelistTempl->Set(isolate, "enabled", v8::Boolean::New(isolate, g_network.whitelistEnabled));
+
+    auto whitelistEntries = v8::Array::New(isolate, g_network.whitelist.size());
+
+    if (!g_network.whitelist.empty())
+    {
+        size_t i = 0;
+        for (auto it = g_network.whitelist.begin(); it != g_network.whitelist.end(); it++)
+        {
+            auto templ = v8::ObjectTemplate::New(isolate);
+            templ->Set(isolate, "type", v8::String::NewFromUtf8(isolate, (*it).type == WhitelistEntryType::NAME ? "name" : "ip").ToLocalChecked());
+            templ->Set(isolate, "value", v8::String::NewFromUtf8(isolate, (*it).value.c_str()).ToLocalChecked());
+
+            whitelistEntries->Set(context, i, templ->NewInstance(context).ToLocalChecked()).Check();
+            ++i;
+        }
+    }
+
+    auto whitelist =  whitelistTempl->NewInstance(context).ToLocalChecked();
+    whitelist->Set(context, v8::String::NewFromUtf8Literal(isolate, "entries"), static_cast<v8::Local<v8::Value>>(whitelistEntries));
+    return whitelist;
+}
+
+NODE_FUNC(setWhitelistEnabled)
+{
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsBoolean()) return v8::Undefined(isolate);
+
+    auto enabled = args[0]->BooleanValue(isolate);
+    g_network.whitelistEnabled = enabled;
+
+    return v8::Undefined(isolate);
+}
+
+NODE_FUNC(addNameToWhitelist)
+{
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsString()) return v8::Undefined(isolate);
+
+    v8::String::Utf8Value utf8Value(isolate, args[0]->ToString(context).ToLocalChecked());
+    std::string name(*utf8Value);
+
+    scheduleServerThreadAndWait([&]() {
+        g_network.whitelist.insert(WhitelistEntry{WhitelistEntryType::NAME, name});
+    });
+
+    return v8::Undefined(isolate);
+}
+
+NODE_FUNC(addIpToWhitelist)
+{
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsString()) return v8::Undefined(isolate);
+
+    v8::String::Utf8Value utf8Value(isolate, args[0]->ToString(context).ToLocalChecked());
+    std::string ip(*utf8Value);
+
+    scheduleServerThreadAndWait([=]() {
+        g_network.whitelist.insert(WhitelistEntry{WhitelistEntryType::IP, ip});
+    });
+
+    return v8::Undefined(isolate);
+}
+
+NODE_FUNC(removeNameFromWhitelist)
+{
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsString()) return v8::Undefined(isolate);
+
+    v8::String::Utf8Value utf8Value(isolate, args[0]->ToString(context).ToLocalChecked());
+    std::string name(*utf8Value);
+
+    scheduleServerThreadAndWait([=]() {
+        g_network.whitelist.erase(WhitelistEntry{WhitelistEntryType::NAME, name});
+    });
+
+    return v8::Undefined(isolate);
+}
+
+NODE_FUNC(removeIpFromWhitelist)
+{
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsString()) return v8::Undefined(isolate);
+
+    v8::String::Utf8Value utf8Value(isolate, args[0]->ToString(context).ToLocalChecked());
+    std::string ip(*utf8Value);
+
+    scheduleServerThreadAndWait([=]() {
+        g_network.whitelist.erase(WhitelistEntry{WhitelistEntryType::IP, ip});
+    });
+
+    return v8::Undefined(isolate);
 }
 
 void Initialize(v8::Local<v8::Object> exports)
@@ -255,6 +363,13 @@ void Initialize(v8::Local<v8::Object> exports)
 
     NODE_SET_METHOD(exports, "setAcceptingSpectators", setAcceptingSpectators);
     NODE_SET_METHOD(exports, "getAcceptingSpectators", getAcceptingSpectators);
+
+    NODE_SET_METHOD(exports, "getWhitelist", getWhitelist);
+    NODE_SET_METHOD(exports, "setWhitelistEnabled", setWhitelistEnabled);
+    NODE_SET_METHOD(exports, "addNameToWhitelist", addNameToWhitelist);
+    NODE_SET_METHOD(exports, "addIpToWhitelist", addIpToWhitelist);
+    NODE_SET_METHOD(exports, "removeNameFromWhitelist", removeNameFromWhitelist);
+    NODE_SET_METHOD(exports, "removeIpFromWhitelist", removeIpFromWhitelist);
 }
 
 NODE_MODULE(p2_ghost_server, Initialize)
