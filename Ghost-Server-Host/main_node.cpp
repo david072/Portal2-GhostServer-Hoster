@@ -18,7 +18,7 @@ static NetworkManager g_network;
     }                                                                                                                                             \
     v8::Local<v8::Value> name##_callback(v8::Isolate *isolate, v8::Local<v8::Context> &context, const v8::FunctionCallbackInfo<v8::Value> &args)
 
-#define nodeStringLiteral(str) v8::String::NewFromUtf8(isolate, str).ToLocalChecked()
+#define nodeStringLiteral(str) v8::String::NewFromUtf8Literal(isolate, str)
 
 std::string toCppString(v8::Isolate *isolate, v8::MaybeLocal<v8::String> str)
 {
@@ -123,98 +123,76 @@ NODE_FUNC(serverMessage)
 
 NODE_FUNC(disconnect)
 {
-    if (args.Length() != 1)
-        return v8::Undefined(isolate);
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsString()) return v8::Undefined(isolate);
 
-    auto name = args[0];
-    if (!name->IsString())
-        return v8::Undefined(isolate);
+    auto playerName = toCppString(isolate, args[0]->ToString(context));
 
-    v8::String::Utf8Value utf8Value(isolate, name->ToString(context).ToLocalChecked());
-    std::string playerName(*utf8Value);
-
-    g_network.ScheduleServerThread([=]()
-                                   {
+    scheduleServerThreadAndWait([=]() {
         auto players = g_network.GetPlayerByName(playerName);
         for (auto cl : players)
-            g_network.DisconnectPlayer(*cl, "kicked"); });
+            g_network.DisconnectPlayer(*cl, "kicked");
+    });
 
     return v8::Undefined(isolate);
 }
 
 NODE_FUNC(disconnectId)
 {
-    if (args.Length() != 1)
-        return v8::Undefined(isolate);
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsNumber()) return v8::Undefined(isolate);
 
-    auto id = args[0];
-    if (!id->IsNumber())
-        return v8::Undefined(isolate);
+    auto clientId = args[0]->NumberValue(context).ToChecked();
 
-    auto clientId = id->NumberValue(context).ToChecked();
-
-    g_network.ScheduleServerThread([=]
-                                   {
+    scheduleServerThreadAndWait([=] {
         auto cl = g_network.GetClientByID(clientId);
-        if (cl) g_network.DisconnectPlayer(*cl, "kicked"); });
+        if (cl) g_network.DisconnectPlayer(*cl, "kicked");
+    });
 
     return v8::Undefined(isolate);
 }
 
 NODE_FUNC(ban)
 {
-    if (args.Length() != 1)
-        return v8::Undefined(isolate);
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsString()) return v8::Undefined(isolate);
 
-    auto name = args[0];
-    if (!name->IsString())
-    {
-        return v8::Undefined(isolate);
-    }
+    std::string playerName = toCppString(isolate, args[0]->ToString(context));
 
-    v8::String::Utf8Value utf8Value(isolate, name->ToString(context).ToLocalChecked());
-    std::string playerName(*utf8Value);
-
-    g_network.ScheduleServerThread([=]()
-                                   {
+    scheduleServerThreadAndWait([=]() {
         auto players = g_network.GetPlayerByName(playerName);
         for (auto cl : players)
-            g_network.BanClientIP(cl->IP); });
+            g_network.BanClientIP(cl->IP);
+    });
 
     return v8::Undefined(isolate);
 }
 
 NODE_FUNC(banId)
 {
-    if (args.Length() != 1)
-        return v8::Undefined(isolate);
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsNumber()) return v8::Undefined(isolate);
 
-    auto id = args[0];
-    if (!id->IsNumber())
-        return v8::Undefined(isolate);
+    auto clientId = args[0]->NumberValue(context).ToChecked();
 
-    auto clientId = id->NumberValue(context).ToChecked();
-
-    g_network.ScheduleServerThread([=]
-                                   {
+    scheduleServerThreadAndWait([=] {
         auto cl = g_network.GetClientByID(clientId);
-        if (cl) g_network.BanClientIP(cl->IP); });
+        if (cl) g_network.BanClientIP(cl->IP);
+    });
 
     return v8::Undefined(isolate);
 }
 
 NODE_FUNC(setAcceptingPlayers)
 {
-    bool newValue = true;
-    if (args.Length() == 1)
-    {
-        auto _newValue = args[0];
-        if (_newValue->IsBoolean())
-            newValue = _newValue->BooleanValue(isolate);
-    }
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsBoolean()) return v8::Undefined(isolate);
 
-    g_network.ScheduleServerThread([=]()
-                                   { g_network.acceptingPlayers = newValue; });
+    bool accept = args[0]->BooleanValue(isolate);
+
+    scheduleServerThreadAndWait([=]() {
+        g_network.acceptingPlayers = accept;
+    });
 
     return v8::Undefined(isolate);
 }
@@ -226,16 +204,14 @@ NODE_FUNC(getAcceptingPlayers)
 
 NODE_FUNC(setAcceptingSpectators)
 {
-    bool newValue = true;
-    if (args.Length() == 1)
-    {
-        auto _newValue = args[0];
-        if (_newValue->IsBoolean())
-            newValue = _newValue->BooleanValue(isolate);
-    }
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsBoolean()) return v8::Undefined(isolate);
 
-    g_network.ScheduleServerThread([=]()
-                                   { g_network.acceptingSpectators = newValue; });
+    bool accept = args[0]->BooleanValue(isolate);
+
+    scheduleServerThreadAndWait([=]() {
+        g_network.acceptingSpectators = accept;
+    });
 
     return v8::Undefined(isolate);
 }
@@ -267,7 +243,7 @@ NODE_FUNC(getWhitelist)
     }
 
     auto whitelist =  whitelistTempl->NewInstance(context).ToLocalChecked();
-    whitelist->Set(context, v8::String::NewFromUtf8Literal(isolate, "entries"), static_cast<v8::Local<v8::Value>>(whitelistEntries));
+    whitelist->Set(context, nodeStringLiteral("entries"), static_cast<v8::Local<v8::Value>>(whitelistEntries));
     return whitelist;
 }
 
@@ -287,8 +263,7 @@ NODE_FUNC(addNameToWhitelist)
     if (args.Length() != 1) return v8::Undefined(isolate);
     if (!args[0]->IsString()) return v8::Undefined(isolate);
 
-    v8::String::Utf8Value utf8Value(isolate, args[0]->ToString(context).ToLocalChecked());
-    std::string name(*utf8Value);
+    auto name = toCppString(isolate, args[0]->ToString(context));
 
     scheduleServerThreadAndWait([&]() {
         g_network.whitelist.insert(WhitelistEntry{WhitelistEntryType::NAME, name});
@@ -302,8 +277,7 @@ NODE_FUNC(addIpToWhitelist)
     if (args.Length() != 1) return v8::Undefined(isolate);
     if (!args[0]->IsString()) return v8::Undefined(isolate);
 
-    v8::String::Utf8Value utf8Value(isolate, args[0]->ToString(context).ToLocalChecked());
-    std::string ip(*utf8Value);
+    auto ip = toCppString(isolate, args[0]->ToString(context));
 
     scheduleServerThreadAndWait([=]() {
         g_network.whitelist.insert(WhitelistEntry{WhitelistEntryType::IP, ip});
@@ -317,8 +291,7 @@ NODE_FUNC(removeNameFromWhitelist)
     if (args.Length() != 1) return v8::Undefined(isolate);
     if (!args[0]->IsString()) return v8::Undefined(isolate);
 
-    v8::String::Utf8Value utf8Value(isolate, args[0]->ToString(context).ToLocalChecked());
-    std::string name(*utf8Value);
+    auto name = toCppString(isolate, args[0]->ToString(context));
 
     scheduleServerThreadAndWait([=]() {
         g_network.whitelist.erase(WhitelistEntry{WhitelistEntryType::NAME, name});
@@ -332,8 +305,7 @@ NODE_FUNC(removeIpFromWhitelist)
     if (args.Length() != 1) return v8::Undefined(isolate);
     if (!args[0]->IsString()) return v8::Undefined(isolate);
 
-    v8::String::Utf8Value utf8Value(isolate, args[0]->ToString(context).ToLocalChecked());
-    std::string ip(*utf8Value);
+    auto ip = toCppString(isolate, args[0]->ToString(context));
 
     scheduleServerThreadAndWait([=]() {
         g_network.whitelist.erase(WhitelistEntry{WhitelistEntryType::IP, ip});

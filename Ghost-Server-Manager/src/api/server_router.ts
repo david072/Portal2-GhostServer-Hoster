@@ -86,52 +86,19 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.get("/:id/listPlayers", async (req, res) => {
-	await db.openDatabase();
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	const response = await sendToContainer(container, "/listPlayers", "GET");
-	res.status(200).json(response.data);
+	await passthroughToContainer(req, res, "/listPlayers", "GET");
 });
 
 router.get("/:id/settings", async (req, res) => {
-	await db.openDatabase();
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	const response = await sendToContainer(container, "/settings", "GET");
-	res.status(200).json(response.data);
+	await passthroughToContainer(req, res, "/settings", "GET");
 });
 
 router.put("/:id/settings", async (req, res) => {
-	await db.openDatabase();
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	delete req.body.user;
-	await sendToContainer(container, "/settings", "PUT", req.body);
-	res.status(200).send();
+	await passthroughToContainer(req, res, "/settings", "PUT");
 });
 
 router.post("/:id/startCountdown", async (req, res) => {
-	await db.openDatabase();
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	await sendToContainer(container, "/startCountdown", "PUT");
-	res.status(200).send();
+	await passthroughToContainer(req, res, "/startCountdown", "PUT");
 });
 
 router.post("/:id/serverMessage", async (req, res) => {
@@ -152,45 +119,11 @@ router.post("/:id/serverMessage", async (req, res) => {
 });
 
 router.put("/:id/banPlayer", async (req, res) => {
-	await db.openDatabase();
-	logger.info({ source: "banPlayer", message: "Route called" });
-
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	const response = await sendToContainer(container, "/banPlayer", "PUT", req.body);
-	if (response.status !== 200) {
-		logger.error({ source: "Container: banPlayer", message: "Banning player failed!" });
-		res.status(response.status).send(response.data);
-		return;
-	}
-
-	logger.info({ source: "Container: banPlayer", message: "Successfully banned the player" });
-	res.status(200).send();
+	await passthroughToContainer(req, res, "/banPlayer", "PUT");
 });
 
 router.put("/:id/disconnectPlayer", async (req, res) => {
-	await db.openDatabase();
-	logger.info({ source: "disconnectPlayer", message: "Route called" });
-
-	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
-	if (container === undefined) {
-		res.status(400).send("Invalid container ID");
-		return;
-	}
-
-	const response = await sendToContainer(container, "/disconnectPlayer", "PUT", req.body);
-	if (response.status !== 200) {
-		logger.error({ source: "disconnectPlayer", message: "Disconnecting player failed!" });
-		res.status(response.status).send(response.data);
-		return;
-	}
-
-	logger.info({ source: "disconnectPlayer", message: "Successfully disconnected the player" });
-	res.status(200).send();
+	await passthroughToContainer(req, res, "/disconnectPlayer", "PUT");
 });
 
 router.get("/:id/whitelist", async (req, res) => {
@@ -227,6 +160,7 @@ function sendToContainer(container: db.Container, route: string, method: Method,
 		method: method,
 		headers: { "Content-Type": "application/json" },
 		data: data,
+		validateStatus: () => true,
 	});
 }
 
