@@ -6,7 +6,7 @@ import { addDays, addHours } from "date-fns";
 import bcrypt from "bcrypt";
 import { logger } from "../util/logger";
 
-const AUTH_TOKEN_DURATION_DAYS = 7;
+const AUTH_TOKEN_DURATION_DAYS = 300;
 
 const dbPath = join(__dirname, "../../db/users.db");
 
